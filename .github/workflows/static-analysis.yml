@@ -35,6 +35,14 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress --ignore-platform-req=ext-opentelemetry
 
+      - name: Create .env file and warm up cache
+        run: |
+          cp .env.test .env
+          echo "APP_ENV=dev" >> .env
+          php bin/console cache:clear --env=dev --no-debug
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --error-format=github
 
