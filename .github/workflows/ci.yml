@@ -68,6 +68,17 @@ jobs:
           cp .env.test .env
           echo "APP_ENV=test" >> .env
 
+      - name: Run database migrations
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+        env:
+          APP_DATABASE_HOST: localhost
+          APP_DATABASE_PORT: 5432
+          APP_DATABASE_NAME: test_db
+          APP_DATABASE_ROOT_LOGIN: test_user
+          APP_DATABASE_ROOT_PASSWORD: test_password
+          APP_DATABASE_SERVICE_LOGIN: test_user
+          APP_DATABASE_SERVICE_PASSWORD: test_password
+
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
         env:
