@@ -134,6 +134,14 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress --no-dev
 
+      - name: Setup database schema
+        run: |
+          php bin/console doctrine:schema:create --quiet || true
+          php bin/console doctrine:migrations:migrate --no-interaction --quiet || true
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+
       - name: Start application (RoadRunner)
         run: |
           # Start RoadRunner in background
@@ -146,6 +154,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379
+          APP_ENV: test
 
       - name: Install k6
         run: |
@@ -246,6 +255,14 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress --no-dev
 
+      - name: Setup database schema
+        run: |
+          php bin/console doctrine:schema:create --quiet || true
+          php bin/console doctrine:migrations:migrate --no-interaction --quiet || true
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+
       - name: Start application (RoadRunner)
         run: |
           ./vendor/bin/rr serve -c .rr.yaml &
@@ -255,6 +272,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379
+          APP_ENV: test
 
       - name: Install k6
         run: |
@@ -528,6 +546,14 @@ jobs:
           echo "runtime=$runtime" >> $GITHUB_OUTPUT
           echo "port=$port" >> $GITHUB_OUTPUT
 
+      - name: Setup database schema
+        run: |
+          php bin/console doctrine:schema:create --quiet || true
+          php bin/console doctrine:migrations:migrate --no-interaction --quiet || true
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+
       - name: Start application
         run: |
           ./vendor/bin/rr serve -c .rr.yaml &
@@ -536,6 +562,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379
+          APP_ENV: test
 
       - name: Install k6
         run: |
