@@ -132,7 +132,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress --no-dev
+        run: composer install --no-interaction --prefer-dist --no-progress --no-dev --ignore-platform-req=ext-opentelemetry
 
       - name: Setup database schema
         run: |
@@ -253,7 +253,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress --no-dev
+        run: composer install --no-interaction --prefer-dist --no-progress --no-dev --ignore-platform-req=ext-opentelemetry
 
       - name: Setup database schema
         run: |
@@ -531,7 +531,7 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress --no-dev
+        run: composer install --no-interaction --prefer-dist --no-progress --no-dev --ignore-platform-req=ext-opentelemetry
 
       - name: Determine runtime and port
         id: runtime

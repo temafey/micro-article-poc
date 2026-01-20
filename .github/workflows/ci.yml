@@ -61,7 +61,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+        run: composer install --no-interaction --prefer-dist --no-progress --ignore-platform-req=ext-opentelemetry
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
@@ -106,7 +106,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+        run: composer install --no-interaction --prefer-dist --no-progress --ignore-platform-req=ext-opentelemetry
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --error-format=github
@@ -143,7 +143,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+        run: composer install --no-interaction --prefer-dist --no-progress --ignore-platform-req=ext-opentelemetry
 
       - name: Check code style
         run: vendor/bin/ecs check
@@ -177,7 +177,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+        run: composer install --no-interaction --prefer-dist --no-progress --ignore-platform-req=ext-opentelemetry
 
       - name: Check architecture layers
         run: vendor/bin/deptrac analyse --formatter=github-actions
@@ -212,7 +212,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+        run: composer install --no-interaction --prefer-dist --no-progress --ignore-platform-req=ext-opentelemetry
 
       - name: Run Psalm Security Taint Analysis
         run: vendor/bin/psalm --taint-analysis --output-format=github

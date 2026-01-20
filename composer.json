@@ -112,6 +112,9 @@
             "symfony/flex": true,
             "symfony/runtime": true,
             "tbachert/spi": true
+        },
+        "platform": {
+            "ext-opentelemetry": "1.0.0"
         }
     },
     "autoload": {
