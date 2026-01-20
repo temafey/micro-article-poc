@@ -18,9 +18,9 @@ jobs:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: test_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: micro-article-system
         ports:
           - 5432:5432
         options: >-
@@ -68,15 +68,10 @@ jobs:
           cp .env.test .env
           echo "APP_ENV=test" >> .env
 
-      - name: Create test database and run migrations
-        run: |
-          php bin/console doctrine:database:create --if-not-exists --env=test --connection=migration
-          php bin/console doctrine:migrations:migrate --no-interaction --env=test
+      - name: Run database migrations
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
         env:
           APP_DATABASE_HOST: localhost
-          APP_DATABASE_NAME: micro-article-system
-          APP_DATABASE_ROOT_LOGIN: test_user
-          APP_DATABASE_ROOT_PASSWORD: test_password
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
