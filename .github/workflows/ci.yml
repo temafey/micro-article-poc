@@ -68,28 +68,20 @@ jobs:
           cp .env.test .env
           echo "APP_ENV=test" >> .env
 
-      - name: Run database migrations
-        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+      - name: Create test database and run migrations
+        run: |
+          php bin/console doctrine:database:create --if-not-exists --env=test --connection=migration
+          php bin/console doctrine:migrations:migrate --no-interaction --env=test
         env:
           APP_DATABASE_HOST: localhost
-          APP_DATABASE_PORT: 5432
-          APP_DATABASE_NAME: test_db
+          APP_DATABASE_NAME: micro-article-system
           APP_DATABASE_ROOT_LOGIN: test_user
           APP_DATABASE_ROOT_PASSWORD: test_password
-          APP_DATABASE_SERVICE_LOGIN: test_user
-          APP_DATABASE_SERVICE_PASSWORD: test_password
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
         env:
           APP_DATABASE_HOST: localhost
-          APP_DATABASE_PORT: 5432
-          APP_DATABASE_NAME: test_db
-          APP_DATABASE_ROOT_LOGIN: test_user
-          APP_DATABASE_ROOT_PASSWORD: test_password
-          APP_DATABASE_SERVICE_LOGIN: test_user
-          APP_DATABASE_SERVICE_PASSWORD: test_password
-          REDIS_URL: redis://localhost:6379
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
