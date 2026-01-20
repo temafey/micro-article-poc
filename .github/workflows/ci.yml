@@ -77,6 +77,8 @@ jobs:
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
         env:
           APP_DATABASE_HOST: localhost
+          APP_DATABASE_SERVICE_LOGIN: postgres
+          APP_DATABASE_SERVICE_PASSWORD: postgres
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
