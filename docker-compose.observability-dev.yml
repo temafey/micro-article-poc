@@ -1,0 +1,237 @@
+# =============================================================================
+# OpenTelemetry Development Stack (TASK-034: Observability Foundation)
+# =============================================================================
+# Replaces legacy 10-container monitoring stack with single grafana/otel-lgtm
+# container for unified metrics, logs, traces collection.
+#
+# Components included in grafana/otel-lgtm:
+#   - Grafana (UI) - port 3000
+#   - Loki (logs)
+#   - Tempo (traces)
+#   - Mimir (metrics)
+#   - OpenTelemetry Collector (OTLP receiver)
+#
+# OTLP Endpoints:
+#   - gRPC: port 4317
+#   - HTTP: port 4318
+#
+# Usage:
+#   make otel-start    # Start observability stack
+#   make otel-stop     # Stop observability stack
+#   make otel-logs     # View container logs
+#
+# Related: ADR-014-observability-stack-modernization.md
+# =============================================================================
+
+services:
+
+  otel-lgtm:
+    hostname: ${APP_OTEL_LGTM_NAME:-test-otel-lgtm}
+    container_name: ${APP_OTEL_LGTM_NAME:-test-otel-lgtm}
+    image: grafana/otel-lgtm:latest
+    restart: unless-stopped
+    ports:
+      # Grafana UI
+      - "${APP_GRAFANA_EXT_PORT:-3000}:${APP_GRAFANA_PORT:-3000}"
+      # OTLP gRPC receiver
+      - "${APP_OTLP_GRPC_EXT_PORT:-4317}:${APP_OTLP_GRPC_PORT:-4317}"
+      # OTLP HTTP receiver
+      - "${APP_OTLP_HTTP_EXT_PORT:-4318}:${APP_OTLP_HTTP_PORT:-4318}"
+    environment:
+      # Grafana configuration
+      - GF_SECURITY_ADMIN_USER=${APP_GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${APP_GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      # Enable anonymous access for development
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      # Logging level (debug for provisioning diagnostics)
+      - GF_LOG_LEVEL=debug
+      # Enable Grafana logging in otel-lgtm container (default is false)
+      - ENABLE_LOGS_GRAFANA=true
+      # Enable OTel Collector logging for debugging
+      - ENABLE_LOGS_OTELCOL=true
+      # Enable unified alerting for file-based provisioning (TASK-037)
+      - GF_UNIFIED_ALERTING_ENABLED=true
+      - GF_ALERTING_ENABLED=false
+      # CRITICAL: otel-lgtm sets GF_PATHS_HOME=/data/grafana, so we must explicitly
+      # set provisioning path to where our files are mounted
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      # Persist Grafana dashboards and settings
+      - otel_grafana_data:/var/lib/grafana
+      # Persist Loki data (logs)
+      - otel_loki_data:/loki
+      # Persist Tempo data (traces)
+      - otel_tempo_data:/tmp/tempo
+      # Persist Mimir data (metrics)
+      - otel_mimir_data:/data/mimir
+      # Prometheus scrape configuration (TASK-037: Enables infrastructure metrics)
+      - ./.docker/grafana/prometheus.yml:/otel-lgtm/prometheus.yaml:ro
+      # Grafana provisioning (TASK-037: Alerting & Profiling)
+      - ./.docker/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./.docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./.docker/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
+    networks:
+      - ${DOCKER_NETWORK_NAME:-test_article_net}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "org.label-schema.group=observability"
+      - "org.label-schema.description=OpenTelemetry LGTM Stack (Loki, Grafana, Tempo, Mimir)"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # =============================================================================
+  # Infrastructure Exporters (TASK-036: Infrastructure Integration)
+  # =============================================================================
+
+  # PostgreSQL Exporter - Exposes PostgreSQL metrics for Prometheus/Mimir
+  # Metrics endpoint: http://localhost:9187/metrics
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: ${CI_SERVICE_NAME:-test-micro-article-system}-postgres-exporter
+    hostname: postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${APP_DATABASE_SERVICE_LOGIN:-article_service}:${APP_DATABASE_SERVICE_PASSWORD:-article_service_pwd}@${APP_DATABASE_HOST:-test-micro-article-system-database}:${APP_DATABASE_PORT:-5432}/${APP_DATABASE_NAME:-article}?sslmode=disable"
+    ports:
+      - "${POSTGRES_EXPORTER_PORT:-9187}:9187"
+    networks:
+      - ${DOCKER_NETWORK_NAME:-test_article_net}
+    # Note: Depends on PostgreSQL from main docker-compose.yml
+    # Start main stack first: make start
+    labels:
+      - "org.label-schema.group=observability"
+      - "org.label-schema.description=PostgreSQL Prometheus Exporter"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  # Redis Exporter - Exposes Redis metrics for Prometheus/Mimir
+  # Metrics endpoint: http://localhost:9121/metrics
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: ${CI_SERVICE_NAME:-test-micro-article-system}-redis-exporter
+    hostname: redis-exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis://${APP_REDIS_HOST:-test-micro-article-system-redis}:${APP_REDIS_PORT:-6379}"
+    ports:
+      - "${REDIS_EXPORTER_PORT:-9121}:9121"
+    networks:
+      - ${DOCKER_NETWORK_NAME:-test_article_net}
+    # Note: Depends on Redis from main docker-compose.yml
+    # Start main stack first: make start
+    labels:
+      - "org.label-schema.group=observability"
+      - "org.label-schema.description=Redis Prometheus Exporter"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+        reservations:
+          memory: 32M
+
+  # =============================================================================
+  # Webhook Receiver for Alert Testing (TASK-037: Alerting & Profiling)
+  # =============================================================================
+
+  # Simple HTTP echo server to receive and log alert notifications
+  # Logs all incoming webhooks for debugging/testing alert delivery
+  # View logs: docker logs -f test-micro-article-system-webhook-receiver
+  webhook-receiver:
+    image: mendhak/http-https-echo:latest
+    container_name: ${CI_SERVICE_NAME:-test-micro-article-system}-webhook-receiver
+    hostname: webhook-receiver
+    restart: unless-stopped
+    environment:
+      - HTTP_PORT=9999
+      - HTTPS_PORT=9443
+      # Log full body for debugging
+      - LOG_WITHOUT_NEWLINE=true
+    ports:
+      - "${WEBHOOK_RECEIVER_PORT:-9999}:9999"
+    networks:
+      - ${DOCKER_NETWORK_NAME:-test_article_net}
+    labels:
+      - "org.label-schema.group=observability"
+      - "org.label-schema.description=Webhook receiver for alert testing"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+        reservations:
+          memory: 32M
+
+  # =============================================================================
+  # Pyroscope Continuous Profiling (TASK-037: Alerting & Profiling)
+  # =============================================================================
+
+  # Pyroscope - Continuous profiling for performance analysis
+  # UI: http://localhost:4040
+  # Integrated with Grafana as data source for unified observability
+  pyroscope:
+    image: grafana/pyroscope:latest
+    container_name: ${CI_SERVICE_NAME:-test-micro-article-system}-pyroscope
+    hostname: pyroscope
+    restart: unless-stopped
+    # Run in all-in-one mode (single-node) - explicitly set for clarity
+    # Uses filesystem storage for development environments
+    command:
+      - "-target=all"
+      - "-self-profiling.disable-push=true"
+      - "-memberlist.cluster-label="
+      - "-memberlist.join="
+    ports:
+      - "${PYROSCOPE_PORT:-4040}:4040"
+    environment:
+      # Disable self-profiling to reduce overhead in development
+      - PYROSCOPE_SELF_PROFILING_DISABLE=true
+    volumes:
+      - pyroscope_data:/data
+    networks:
+      - ${DOCKER_NETWORK_NAME:-test_article_net}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:4040/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "org.label-schema.group=observability"
+      - "org.label-schema.description=Pyroscope Continuous Profiling"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+networks:
+  test_article_net:
+    external: true
+    name: ${DOCKER_NETWORK_NAME:-test_article_net}
+
+volumes:
+  otel_grafana_data:
+    name: ${APP_COMPANY_NAME:-test}_otel_grafana_data
+  otel_loki_data:
+    name: ${APP_COMPANY_NAME:-test}_otel_loki_data
+  otel_tempo_data:
+    name: ${APP_COMPANY_NAME:-test}_otel_tempo_data
+  otel_mimir_data:
+    name: ${APP_COMPANY_NAME:-test}_otel_mimir_data
+  pyroscope_data:
+    name: ${APP_COMPANY_NAME:-test}_pyroscope_data

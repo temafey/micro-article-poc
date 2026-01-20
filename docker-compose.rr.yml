@@ -1,0 +1,58 @@
+# docker-compose.rr.yml - RoadRunner Runtime Overlay
+#
+# RoadRunner HTTP server (replaces nginx + PHP-FPM).
+# Use with base infrastructure:
+#   docker compose -f docker-compose.yml -f docker-compose.rr.yml -f docker-compose.workers.yml up -d
+#
+# Ports:
+#   8080 - HTTP API
+#   9180 - Prometheus metrics
+#   2114 - Health check
+#
+# Part of Phase 9: Infrastructure Modernization (TASK-029)
+
+services:
+  # RoadRunner HTTP Server
+  test-micro-article-system-http-roadrunner:
+    hostname: ${CI_SERVICE_NAME}-roadrunner
+    container_name: ${CI_SERVICE_NAME}-roadrunner
+    build:
+      context: ./.docker/roadrunner
+      args:
+        RR_VERSION: "2025.1.6"
+    user: 1000:1000
+    volumes:
+      - ./:/app:rw
+      - ~/.composer/cache/:/.composer_cache/:rw
+    working_dir: /app
+    networks:
+      - ${DOCKER_NETWORK_NAME}
+    ports:
+      # HTTP server
+      - "8080:8080"
+      # Prometheus metrics
+      - "9180:9180"
+      # Health check endpoint
+      - "2114:2114"
+    environment:
+      APP_ENV: "${APP_ENV:-dev}"
+      APP_DEBUG: "${APP_DEBUG:-1}"
+      # RoadRunner Runtime
+      APP_RUNTIME: "Baldinof\\RoadRunnerBundle\\Runtime\\Runtime"
+      # Xdebug (off by default, set to 'debug' to enable)
+      XDEBUG_MODE: "${XDEBUG_MODE:-off}"
+    # Note: API Gateway routing handled by APISIX (see docker-compose.apisix.yml)
+    # Traefik labels removed as part of Phase 8 (TASK-024)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2114/health?plugin=http"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      test-micro-article-system-database:
+        condition: service_healthy
+      test-micro-article-system-rabbitmq:
+        condition: service_started
+      test-micro-article-system-redis:
+        condition: service_started

@@ -1,0 +1,7 @@
+services:
+  _defaults:
+    public: true
+
+  # Enqueue producer is provided by the enqueue bundle when configured.
+  # In test environment, messages will be queued but not consumed.
+  # No override needed - the bundle auto-wires the producer.

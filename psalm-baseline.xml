@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="6.14.3@d0b040a91f280f071c1abcb1b77ce3822058725a">
+  <file src="src/Common/Infrastructure/EventListener/ApiVersionListener.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public static function getSubscribedEvents(): array]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/EventListener/ProcessUuidListener.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public static function getSubscribedEvents(): array]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Migrations/Version202401300103816.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function down(Schema $schema): void]]></code>
+      <code><![CDATA[public function getDescription(): string]]></code>
+      <code><![CDATA[public function up(Schema $schema): void]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Migrations/Version202401300103817.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function down(Schema $schema): void]]></code>
+      <code><![CDATA[public function getDescription(): string]]></code>
+      <code><![CDATA[public function up(Schema $schema): void]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Migrations/Version202401300103818.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function down(Schema $schema): void]]></code>
+      <code><![CDATA[public function getDescription(): string]]></code>
+      <code><![CDATA[public function up(Schema $schema): void]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Migrations/Version202401300103819.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function down(Schema $schema): void]]></code>
+      <code><![CDATA[public function getDescription(): string]]></code>
+      <code><![CDATA[public function up(Schema $schema): void]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Migrations/Version20251218222631.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function down(Schema $schema): void]]></code>
+      <code><![CDATA[public function getDescription(): string]]></code>
+      <code><![CDATA[public function up(Schema $schema): void]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Repository/Storage/DBALReadModelStore.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[protected function getDefaultQuery(): string]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Service/DataMapper/DbalDataMapper.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[protected function getFieldTypes(): array]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Service/Postman/CollectionFileWriter.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function write(string $filePath, array $data): void]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Service/Postman/PostmanCollectionFactory.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function createCommandsCollection(]]></code>
+      <code><![CDATA[public function createQueriesCollection(]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Service/Postman/PostmanEnvironmentGenerator.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function extractVariables(array $collections): array]]></code>
+      <code><![CDATA[public function generateEnvironment(]]></code>
+    </MissingOverrideAttribute>
+    <RedundantFunctionCall>
+      <code><![CDATA[array_values]]></code>
+    </RedundantFunctionCall>
+  </file>
+  <file src="src/Common/Infrastructure/Service/Postman/PostmanGeneratorService.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function generateCollections(string $apiVersion, string $outputDirectory): array]]></code>
+      <code><![CDATA[public function generateCollectionsWithEnvironment(]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Infrastructure/Service/Postman/PostmanRequestBuilder.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function buildRequest(array $operation, array $openApiSpec): array]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Common/Presentation/Cli/EmulateHttpRequestCommand.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[json_encode($data)]]></code>
+    </FalsableReturnStatement>
+    <InvalidNullableReturnType>
+      <code><![CDATA[string]]></code>
+    </InvalidNullableReturnType>
+    <MissingOverrideAttribute>
+      <code><![CDATA[protected function configure(): void]]></code>
+      <code><![CDATA[protected function execute(InputInterface $input, OutputInterface $output): int]]></code>
+    </MissingOverrideAttribute>
+    <NullableReturnStatement>
+      <code><![CDATA[$text]]></code>
+    </NullableReturnStatement>
+  </file>
+  <file src="src/Common/Presentation/Cli/GeneratePostmanCollectionCommand.php">
+    <InvalidArrayOffset>
+      <code><![CDATA[$units[$index]]]></code>
+    </InvalidArrayOffset>
+    <InvalidOperand>
+      <code><![CDATA[$bytes /= 1024]]></code>
+    </InvalidOperand>
+    <MissingOverrideAttribute>
+      <code><![CDATA[protected function configure(): void]]></code>
+      <code><![CDATA[protected function execute(InputInterface $input, OutputInterface $output): int]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Component/Common/Infrastructure/Service/DataMapper.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[protected function getFieldTypes(): array]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Kernel.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function registerBundles(): iterable]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Application/CommandHandler/ArticleArchiveHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleArchiveCommand): string]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleArchiveCommand]]></code>
+    </ParamNameMismatch>
+  </file>
+  <file src="src/Article/Application/CommandHandler/ArticleCreateHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleCreateCommand): string]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleCreateCommand]]></code>
+    </ParamNameMismatch>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getArticle]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Article/Application/CommandHandler/ArticleDeleteHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleDeleteCommand): string]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleDeleteCommand]]></code>
+    </ParamNameMismatch>
+  </file>
+  <file src="src/Article/Application/CommandHandler/ArticlePublishHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articlePublishCommand): string]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articlePublishCommand]]></code>
+    </ParamNameMismatch>
+  </file>
+  <file src="src/Article/Application/CommandHandler/ArticleUnpublishHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleUnpublishCommand): string]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleUnpublishCommand]]></code>
+    </ParamNameMismatch>
+  </file>
+  <file src="src/Article/Application/CommandHandler/ArticleUpdateHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleUpdateCommand): string]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleUpdateCommand]]></code>
+    </ParamNameMismatch>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getArticle]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Article/Application/CommandHandler/Task/ArticleArchiveTaskCommandHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleArchiveTaskCommand): bool]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleArchiveTaskCommand]]></code>
+    </ParamNameMismatch>
+  </file>
+  <file src="src/Article/Application/CommandHandler/Task/ArticleCreateTaskCommandHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleCreateTaskCommand): bool]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleCreateTaskCommand]]></code>
+    </ParamNameMismatch>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getArticle]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Article/Application/CommandHandler/Task/ArticleDeleteTaskCommandHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleDeleteTaskCommand): bool]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleDeleteTaskCommand]]></code>
+    </ParamNameMismatch>
+  </file>
+  <file src="src/Article/Application/CommandHandler/Task/ArticlePublishTaskCommandHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articlePublishTaskCommand): bool]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articlePublishTaskCommand]]></code>
+    </ParamNameMismatch>
+  </file>
+  <file src="src/Article/Application/CommandHandler/Task/ArticleUnpublishTaskCommandHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleUnpublishTaskCommand): bool]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleUnpublishTaskCommand]]></code>
+    </ParamNameMismatch>
+  </file>
+  <file src="src/Article/Application/CommandHandler/Task/ArticleUpdateTaskCommandHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(CommandInterface $articleUpdateTaskCommand): bool]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$articleUpdateTaskCommand]]></code>
+    </ParamNameMismatch>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getArticle]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Article/Application/Dto/ArticleDto.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function normalize(): array]]></code>
+      <code><![CDATA[public static function denormalize(array $data): static]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Application/Factory/CommandFactory.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function isCommandAllowed(string $commandType): bool]]></code>
+      <code><![CDATA[public function makeCommandInstanceByType(...$args): BaseCommandInterface]]></code>
+      <code><![CDATA[public function makeCommandInstanceByTypeFromDto(string $commandType, DtoInterface $dto): BaseCommandInterface]]></code>
+      <code><![CDATA[public function makeArticleArchiveCommand(]]></code>
+      <code><![CDATA[public function makeArticleArchiveTaskCommand(]]></code>
+      <code><![CDATA[public function makeArticleCreateCommand(string $processUuid, array $article, ?array $payload = null): ArticleCreateCommand]]></code>
+      <code><![CDATA[public function makeArticleCreateTaskCommand(]]></code>
+      <code><![CDATA[public function makeArticleDeleteCommand(string $processUuid, string $uuid, ?array $payload = null): ArticleDeleteCommand]]></code>
+      <code><![CDATA[public function makeArticleDeleteTaskCommand(]]></code>
+      <code><![CDATA[public function makeArticlePublishCommand(]]></code>
+      <code><![CDATA[public function makeArticlePublishTaskCommand(]]></code>
+      <code><![CDATA[public function makeArticleUnpublishCommand(]]></code>
+      <code><![CDATA[public function makeArticleUnpublishTaskCommand(]]></code>
+      <code><![CDATA[public function makeArticleUpdateCommand(]]></code>
+      <code><![CDATA[public function makeArticleUpdateTaskCommand(]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Application/Factory/DtoFactory.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function makeDtoByType(...$args): DtoInterface]]></code>
+      <code><![CDATA[public function makeArticleDto(]]></code>
+      <code><![CDATA[public function makeArticleDtoFromData(array $data): ArticleDto]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Application/Factory/QueryFactory.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function isQueryAllowed(string $queryType): bool]]></code>
+      <code><![CDATA[public function makeFetchOneArticleQuery(string $processUuid, string $uuid): FetchOneArticleQuery]]></code>
+      <code><![CDATA[public function makeFindByCriteriaArticleQuery(string $processUuid, array $findCriteria): FindByCriteriaArticleQuery]]></code>
+      <code><![CDATA[public function makeFindOneByArticleQuery(string $processUuid, array $findCriteria): FindOneByArticleQuery]]></code>
+      <code><![CDATA[public function makeQueryInstanceByTypeFromDto(string $queryType, DtoInterface $dto): BaseQueryInterface]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Application/Processor/QueueEventProcessor.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public static function getTopic(): string]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Application/QueryHandler/FetchOneArticleHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(QueryInterface $fetchOneArticleQuery): ?ArticleReadModelInterface]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$fetchOneArticleQuery]]></code>
+    </ParamNameMismatch>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getUuid]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Article/Application/QueryHandler/FindByCriteriaArticleHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(QueryInterface $findByCriteriaArticleQuery): ?array]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$findByCriteriaArticleQuery]]></code>
+    </ParamNameMismatch>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getFindCriteria]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Article/Application/QueryHandler/FindOneByArticleHandler.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function handle(QueryInterface $findOneByArticleQuery): ?ArticleReadModelInterface]]></code>
+    </MissingOverrideAttribute>
+    <ParamNameMismatch>
+      <code><![CDATA[$findOneByArticleQuery]]></code>
+    </ParamNameMismatch>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getFindCriteria]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Article/Application/Saga/ArticleCreationPublicationWorkflowSaga.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public static function configuration()]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Domain/Entity/ArticleEntity.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function assembleFromValueObject(ValueObjectInterface $valueObject): void]]></code>
+      <code><![CDATA[public function assembleToValueObject(): ValueObjectInterface]]></code>
+      <code><![CDATA[public function getAggregateRootId(): string]]></code>
+      <code><![CDATA[public function getArchivedAt(): ?ArchivedAt]]></code>
+      <code><![CDATA[public function getCreatedAt(): ?CreatedAt]]></code>
+      <code><![CDATA[public function getDescription(): ?Description]]></code>
+      <code><![CDATA[public function getEventId(): ?EventId]]></code>
+      <code><![CDATA[public function getPrimaryKeyValue(): string]]></code>
+      <code><![CDATA[public function getProcessUuid(): ?ProcessUuid]]></code>
+      <code><![CDATA[public function getPublishedAt(): ?PublishedAt]]></code>
+      <code><![CDATA[public function getShortDescription(): ?ShortDescription]]></code>
+      <code><![CDATA[public function getSlug(): ?Slug]]></code>
+      <code><![CDATA[public function getStatus(): ?Status]]></code>
+      <code><![CDATA[public function getTitle(): ?Title]]></code>
+      <code><![CDATA[public function getUpdatedAt(): ?UpdatedAt]]></code>
+      <code><![CDATA[public function getUuid(): ?Uuid]]></code>
+      <code><![CDATA[public function articleArchive(ProcessUuid $processUuid, ?Payload $payload = null): void]]></code>
+      <code><![CDATA[public function articleCreate(ProcessUuid $processUuid, Article $article, ?Payload $payload = null): void]]></code>
+      <code><![CDATA[public function articleDelete(ProcessUuid $processUuid, ?Payload $payload = null): void]]></code>
+      <code><![CDATA[public function articlePublish(ProcessUuid $processUuid, ?Payload $payload = null): void]]></code>
+      <code><![CDATA[public function articleUnpublish(ProcessUuid $processUuid, ?Payload $payload = null): void]]></code>
+      <code><![CDATA[public function articleUpdate(ProcessUuid $processUuid, Article $article, ?Payload $payload = null): void]]></code>
+      <code><![CDATA[public function serialize(): array]]></code>
+      <code><![CDATA[public function setArticleSlugGeneratorService(ArticleSlugGeneratorServiceInterface $articleSlugGeneratorService): void]]></code>
+      <code><![CDATA[public static function deserialize(array $data): self]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Domain/Factory/EntityFactory.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function createArticleInstance(]]></code>
+      <code><![CDATA[public function makeActualArticleInstance(]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Domain/Factory/EventFactory.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function makeArticleArchivedEvent(]]></code>
+      <code><![CDATA[public function makeArticleCreatedEvent(]]></code>
+      <code><![CDATA[public function makeArticleDeletedEvent(]]></code>
+      <code><![CDATA[public function makeArticlePublishedEvent(]]></code>
+      <code><![CDATA[public function makeArticleUnpublishedEvent(]]></code>
+      <code><![CDATA[public function makeArticleUpdatedEvent(]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Domain/Factory/ReadModelFactory.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function makeArticleActualInstance(Article $article, Uuid $uuid): ArticleReadModelInterface]]></code>
+      <code><![CDATA[public function makeArticleActualInstanceByEntity(ArticleEntityInterface $articleEntity): ArticleReadModelInterface]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Domain/Factory/ValueObjectFactory.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function makeArchivedAt(\DateTimeInterface $archivedAt): ArchivedAt]]></code>
+      <code><![CDATA[public function makeDescription(string $description): Description]]></code>
+      <code><![CDATA[public function makeEventId(int $eventId): EventId]]></code>
+      <code><![CDATA[public function makeArticle(array $article): Article]]></code>
+      <code><![CDATA[public function makePublishedAt(\DateTimeInterface $publishedAt): PublishedAt]]></code>
+      <code><![CDATA[public function makeShortDescription(string $shortDescription): ShortDescription]]></code>
+      <code><![CDATA[public function makeSlug(string $slug): Slug]]></code>
+      <code><![CDATA[public function makeStatus(string $status): Status]]></code>
+      <code><![CDATA[public function makeTitle(string $title): Title]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Domain/ReadModel/ArticleReadModel.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function getArchivedAt(): ?\DateTimeInterface]]></code>
+      <code><![CDATA[public function getCreatedAt(): ?\DateTimeInterface]]></code>
+      <code><![CDATA[public function getDescription(): ?string]]></code>
+      <code><![CDATA[public function getEventId(): ?int]]></code>
+      <code><![CDATA[public function getPrimaryKeyValue(): ?string]]></code>
+      <code><![CDATA[public function getPublishedAt(): ?\DateTimeInterface]]></code>
+      <code><![CDATA[public function getShortDescription(): ?string]]></code>
+      <code><![CDATA[public function getSlug(): ?string]]></code>
+      <code><![CDATA[public function getStatus(): ?string]]></code>
+      <code><![CDATA[public function getTitle(): ?string]]></code>
+      <code><![CDATA[public function getUpdatedAt(): ?\DateTimeInterface]]></code>
+      <code><![CDATA[public function getUuid(): ?Uuid]]></code>
+      <code><![CDATA[public function jsonSerialize(): array]]></code>
+      <code><![CDATA[public function normalize(): array]]></code>
+      <code><![CDATA[public function updateByValueObject(Article $entityValueObject, Uuid $uuid): void]]></code>
+      <code><![CDATA[public static function createByEntity(ArticleEntityInterface $entity): ArticleReadModelInterface]]></code>
+      <code><![CDATA[public static function createByValueObject(Article $entityValueObject, Uuid $uuid): ArticleReadModelInterface]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Domain/Service/ArticleSlugGeneratorService.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function generateSlug(string $title, ?string $existingSlug = null, ?string $excludeUuid = null): string]]></code>
+      <code><![CDATA[public function validateSlugFormat(string $slug): bool]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Domain/ValueObject/Id.php">
+    <MissingImmutableAnnotation>
+      <code><![CDATA[Id]]></code>
+      <code><![CDATA[Id]]></code>
+      <code><![CDATA[Id]]></code>
+    </MissingImmutableAnnotation>
+  </file>
+  <file src="src/Article/Infrastructure/Repository/EntityStore/ArticleRepository.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function get(UuidInterface $uuid): ArticleEntityInterface]]></code>
+      <code><![CDATA[public function store(ArticleEntityInterface $entity): void]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Infrastructure/Repository/Query/ArticleRepository.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function fetchOne(Uuid $uuid): ?ArticleReadModelInterface]]></code>
+      <code><![CDATA[public function findByCriteria(FindCriteria $findCriteria): ?array]]></code>
+      <code><![CDATA[public function findOneBy(FindCriteria $findCriteria): ?ArticleReadModelInterface]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Infrastructure/Repository/ReadModel/ArticleRepository.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function add(ArticleReadModelInterface $articleReadModel): void]]></code>
+      <code><![CDATA[public function delete(ArticleReadModelInterface $articleReadModel): void]]></code>
+      <code><![CDATA[public function get(Uuid $uuid): ?ArticleReadModelInterface]]></code>
+      <code><![CDATA[public function update(ArticleReadModelInterface $articleReadModel): void]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Infrastructure/Repository/Storage/DBALReadModelStore.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[protected function getDefaultQuery(): string]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Infrastructure/Repository/TaskRepository.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function addArticleArchiveTask(ProcessUuid $processUuid, Uuid $uuid): void]]></code>
+      <code><![CDATA[public function addArticleCreateTask(ProcessUuid $processUuid, Article $article): void]]></code>
+      <code><![CDATA[public function addArticleDeleteTask(ProcessUuid $processUuid, Uuid $uuid): void]]></code>
+      <code><![CDATA[public function addArticlePublishTask(ProcessUuid $processUuid, Uuid $uuid): void]]></code>
+      <code><![CDATA[public function addArticleUnpublishTask(ProcessUuid $processUuid, Uuid $uuid): void]]></code>
+      <code><![CDATA[public function addArticleUpdateTask(ProcessUuid $processUuid, Uuid $uuid, Article $article): void]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Infrastructure/Service/SlugUniquenessChecker.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function slugExists(string $slug, ?string $excludeUuid = null): bool]]></code>
+    </MissingOverrideAttribute>
+  </file>
+  <file src="src/Article/Presentation/Rest/V1/ArticleQueriesController.php">
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Article/Presentation/Rest/V2/ArticleQueriesController.php">
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+      <code><![CDATA[makeQueryInstanceByType]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+</files>

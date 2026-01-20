@@ -1,0 +1,11 @@
+# Framework infrastructure routes
+
+# Health check endpoints for monitoring
+health_check:
+    resource: Micro\Component\Common\Presentation\Rest\HealthCheckController
+    type: attribute
+
+#when@dev:
+#    _errors:
+#        resource: '@FrameworkBundle/Resources/config/routing/errors.xml'
+#        prefix: /_error

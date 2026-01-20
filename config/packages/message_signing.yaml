@@ -1,0 +1,66 @@
+# Message Signing Configuration (Symfony 8.0+ / PHP 8.4)
+#
+# Provides HMAC-SHA256 signed message validation for:
+#   - External API command submissions
+#   - Cross-service message passing
+#   - Webhook payload verification
+#
+# Security features:
+#   - Cryptographic signature verification
+#   - Nonce-based replay attack prevention
+#   - Timestamp-based message expiration
+#   - Redis-backed distributed nonce store
+
+parameters:
+    # Message signing secret - use APP_SECRET or dedicated key
+    message_signing.secret: '%env(default:kernel.secret:MESSAGE_SIGNING_SECRET)%'
+
+    # Message lifetime in seconds (default: 5 minutes)
+    # Messages older than this are rejected
+    message_signing.lifetime: '%env(int:default::MESSAGE_LIFETIME)%'
+
+    # Default message lifetime fallback
+    env(MESSAGE_LIFETIME): '300'
+
+    # Whether to require signatures on SignedMessageInterface commands
+    message_signing.require_signature: '%env(bool:default::MESSAGE_REQUIRE_SIGNATURE)%'
+
+    # Default: signature not required (for backward compatibility)
+    env(MESSAGE_REQUIRE_SIGNATURE): 'false'
+
+services:
+    # Message Signer Service - HMAC-SHA256 signing and verification
+    Micro\Component\Common\Infrastructure\Security\MessageSignerService:
+        arguments:
+            $secret: '%message_signing.secret%'
+            $messageLifetime: '%message_signing.lifetime%'
+            $logger: '@logger'
+        tags:
+            - { name: 'monolog.logger', channel: 'security' }
+
+    # Redis Nonce Store - distributed replay attack prevention
+    Micro\Component\Common\Infrastructure\Security\RedisNonceStore:
+        arguments:
+            $redis: '@Redis'
+            $ttl: '%message_signing.lifetime%'
+            $keyPrefix: 'message_nonce:'
+            $logger: '@logger'
+        tags:
+            - { name: 'monolog.logger', channel: 'security' }
+
+    # Tactician Middleware for signature validation
+    Micro\Component\Common\Infrastructure\Security\SignedMessageMiddleware:
+        arguments:
+            $messageSigner: '@Micro\Component\Common\Infrastructure\Security\MessageSignerService'
+            $requireSignature: '%message_signing.require_signature%'
+        tags:
+            - { name: 'tactician.middleware', command_bus: 'command.article', priority: 100 }
+
+    # Aliases for dependency injection
+    message_signer:
+        alias: Micro\Component\Common\Infrastructure\Security\MessageSignerService
+        public: true
+
+    message_nonce_store:
+        alias: Micro\Component\Common\Infrastructure\Security\RedisNonceStore
+        public: true

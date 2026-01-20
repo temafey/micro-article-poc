@@ -1,0 +1,165 @@
+{
+    "name": "expo/micro-article-poc",
+    "version": "1.0.0",
+    "description": "article microservice",
+    "type": "microservice",
+    "license": ["proprietary"],
+    "require": {
+        "php": "^8.4",
+        "ext-ctype": "*",
+        "ext-iconv": "*",
+        "ext-json": "*",
+        "ext-pdo": "*",
+        "ackintosh/ganesha": "^4.0",
+        "baldinof/roadrunner-bundle": "^3.3",
+        "beberlei/assert": "^3.3",
+        "cocur/slugify": "^4.7",
+        "doctrine/dbal": "^4.4",
+        "doctrine/doctrine-bundle": "^3.1",
+        "doctrine/doctrine-migrations-bundle": "^3.7",
+        "doctrine/orm": "^3.5",
+        "enqueue/amqp-bunny": "^0.10",
+        "guzzlehttp/psr7": "^2.8",
+        "http-interop/http-factory-discovery": "^1.6",
+        "league/csv": "^9.27",
+        "micro-module/base": "^0.10 || ^0.11",
+        "micro-module/broadway": "^2.6",
+        "micro-module/broadway-bundle": "^0.6",
+        "micro-module/broadway-saga": "^0.6",
+        "micro-module/command-bus": "^0.6",
+        "micro-module/enqueue-bundle": "^0.10",
+        "micro-module/enqueue-fs": "^0.10",
+        "micro-module/event-queue": "^0.7",
+        "micro-module/event-store-dbal": "^0.7",
+        "micro-module/fault-tolerance-bundle": "^0.10",
+        "micro-module/job-queue": "^0.11",
+        "micro-module/jwt": "^0.6",
+        "micro-module/saga-bundle": "^0.6",
+        "micro-module/snapshotting": "^0.8",
+        "micro-module/tactician-bundle": "^1.6",
+        "micro-module/tactician-command-events": "^0.8",
+        "micro-module/task-bundle": "^0.8",
+        "micro-module/value-object": "^0.6",
+        "nelmio/api-doc-bundle": "^5.9",
+        "nelmio/cors-bundle": "^2.6",
+        "nyholm/psr7": "^1.8",
+        "open-telemetry/exporter-otlp": "^1.3",
+        "open-telemetry/opentelemetry-auto-psr18": "^1.1",
+        "open-telemetry/opentelemetry-auto-symfony": "^1.1",
+        "open-telemetry/opentelemetry-logger-monolog": "^1.1",
+        "open-telemetry/sdk": "^1.10",
+        "pear/crypt_gpg": "^1.6",
+        "predis/predis": "^3.3",
+        "ramsey/uuid": "^4.9",
+        "ramsey/uuid-doctrine": "^2.1",
+        "spiral/roadrunner-metrics": "^3.3",
+        "symfony/asset": "8.0.*",
+        "symfony/console": "8.0.*",
+        "symfony/dotenv": "8.0.*",
+        "symfony/filesystem": "8.0.*",
+        "symfony/flex": "^2.10",
+        "symfony/form": "8.0.*",
+        "symfony/framework-bundle": "8.0.*",
+        "symfony/json-path": "^8.0",
+        "symfony/monolog-bundle": "^4.0",
+        "symfony/object-mapper": "^8.0",
+        "symfony/runtime": "^8.0",
+        "symfony/security-csrf": "^8.0",
+        "symfony/stopwatch": "8.0.*",
+        "symfony/twig-bundle": "8.0.*",
+        "symfony/type-info": "^8.0",
+        "symfony/validator": "8.0.*",
+        "symfony/yaml": "8.0.*"
+    },
+    "require-dev": {
+        "dama/doctrine-test-bundle": "^8.4",
+        "deptrac/deptrac": "^3.0",
+        "infection/infection": "dev-master",
+        "micro-module/microservice-generator": "^0.6",
+        "micro-module/null": "^0.11",
+        "mockery/mockery": "^1.6",
+        "nikic/php-parser": "^5.7",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-beberlei-assert": "^2.0",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-mockery": "^2.0",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^11.5",
+        "psr/http-factory": "^1.1",
+        "rector/rector": "^2.2",
+        "rector/type-perfect": "^2.1",
+        "roave/no-floaters": "^1.14",
+        "roave/security-advisories": "dev-latest",
+        "spiral/roadrunner-cli": "^2.7",
+        "symfony/browser-kit": "8.0.*",
+        "symfony/phpunit-bridge": "8.0.*",
+        "symplify/easy-coding-standard": "^12.5",
+        "symplify/phpstan-rules": "^14.9",
+        "vimeo/psalm": "^6.0"
+    },
+    "config": {
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true,
+        "allow-plugins": {
+            "infection/extension-installer": true,
+            "php-http/discovery": true,
+            "phpstan/extension-installer": true,
+            "symfony/flex": true,
+            "symfony/runtime": true,
+            "tbachert/spi": true
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Micro\\Component\\Common\\": "src/Common",
+            "Micro\\": "src/"
+        },
+        "files": [
+            "bootstrap/const.php",
+            "bootstrap/helper.php",
+            "polyfill/CommandFactoryInterface.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "replace": {
+        "symfony/polyfill-iconv": "*",
+        "enqueue/null": "*",
+        "enqueue/dsn": "*"
+    },
+    "extra": {
+        "symfony": {
+            "id": "*",
+            "allow-contrib": true
+        }
+    },
+    "github-oauth": {
+      "github.com": "token"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+        },
+        "phpunit": "./vendor/bin/phpunit",
+        "phpstan": "./vendor/bin/phpstan analyse --memory-limit=1G",
+        "cs-check": "./vendor/bin/ecs check",
+        "fix-style": "./vendor/bin/ecs check --fix",
+        "test": [
+            "@phpstan",
+            "@cs-check",
+            "@phpunit"
+        ],
+        "preload": "./bin/console cache:clear --env=prod"
+    }
+}

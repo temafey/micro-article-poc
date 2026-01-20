@@ -1,0 +1,29 @@
+# Symfony 8.0 ObjectMapper Configuration
+# Provides object-to-object mapping with type-safe transformations.
+# ObjectMapper is registered automatically via FrameworkBundle.
+
+services:
+    # Domain-specific DTO Mapper service
+    Micro\Component\Common\Infrastructure\Mapper\DtoMapperInterface:
+        alias: Micro\Component\Common\Infrastructure\Mapper\DtoMapper
+
+    # ObjectMapper wrapper for domain DTO mapping
+    Micro\Component\Common\Infrastructure\Mapper\DtoMapper:
+        arguments:
+            $objectMapper: '@object_mapper'
+
+    # Custom Transform Callables for ObjectMapper
+    # UUID Value Object → String transform
+    Micro\Component\Common\Infrastructure\Mapper\Transform\UuidToStringTransform:
+        tags:
+            - { name: 'object_mapper.transform_callable' }
+
+    # DateTime → ISO8601 String transform
+    Micro\Component\Common\Infrastructure\Mapper\Transform\DateTimeToIso8601Transform:
+        tags:
+            - { name: 'object_mapper.transform_callable' }
+
+    # String → DateTime transform (for API request processing)
+    Micro\Component\Common\Infrastructure\Mapper\Transform\StringToDateTimeTransform:
+        tags:
+            - { name: 'object_mapper.transform_callable' }

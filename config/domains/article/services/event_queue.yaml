@@ -1,0 +1,35 @@
+services:
+
+  queue_event_bus.global:
+    class: MicroModule\EventQueue\Application\EventHandling\QueueEventBus
+    arguments:
+      - '@broadway.event_handling.event_bus'
+      - '@event_queue.application.event_handling.queue_event.producer'
+      - '@event_queue.application.event_handling.queue_event.producer.global'
+
+  event_queue.application.event_handling.queue_event.producer:
+    class: MicroModule\EventQueue\Application\EventHandling\QueueEventProducer
+    arguments:
+      - '@enqueue.client.queueevent.producer'
+      - 'micro-platform.article.queueevent'
+
+  event_queue.application.event_handling.queue_event.producer.global:
+    class: MicroModule\EventQueue\Application\EventHandling\QueueEventProducer
+    arguments:
+      - '@enqueue.client.global.article.producer'
+      - 'micro-platform.acl.article.queueevent'
+
+  event_queue.application.event_handling.event_factory:
+    class: MicroModule\EventQueue\Application\EventHandling\EventFactory
+    arguments:
+      - {
+        Micro\Article\Domain\Event\ArticleAddedEvent: 'Micro\Article\Domain\Event\ArticleCreatedEvent'
+      }
+
+  Micro\Article\Application\Processor\QueueEventProcessor:
+    arguments:
+      - '@broadway.event_handling.event_bus'
+      - '@event_queue.application.event_handling.event_factory'
+      - '@logger'
+    tags:
+      - { name: 'enqueue.topic_subscriber', client: 'queueevent' }

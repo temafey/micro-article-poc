@@ -1,0 +1,41 @@
+{
+  "runtime": "phpfpm",
+  "version": "8.4-fpm",
+  "timestamp": "2025-12-29T00:17:53Z",
+  "test_type": "smoke",
+  "configuration": {
+    "vus": 5,
+    "duration_seconds": 30
+  },
+  "metrics": {
+    "requests_total": 571,
+    "requests_per_second": 19.03,
+    "error_rate": 0.0,
+    "latency": {
+      "avg_ms": 10.2,
+      "p95_ms": 17.88,
+      "p99_ms": 25.5,
+      "max_ms": 45.0
+    }
+  },
+  "thresholds": {
+    "warning": {
+      "latency_p95_ms": 19.67,
+      "multiplier": 1.10
+    },
+    "critical": {
+      "latency_p95_ms": 22.35,
+      "multiplier": 1.25
+    }
+  },
+  "endpoints": {
+    "health": {
+      "p95_ms": 8.5,
+      "threshold_ms": 200
+    },
+    "article_api": {
+      "p95_ms": 17.88,
+      "threshold_ms": 1000
+    }
+  }
+}

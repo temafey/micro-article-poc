@@ -1,0 +1,24 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: false
+    public: false
+
+  # Import layer-specific service configurations
+  _instanceof:
+    Micro\Base\Domain\ValueObject\ValueObjectInterface:
+      tags: ['value_object']
+    Micro\Base\Domain\Entity\EntityInterface:
+      tags: ['entity']
+    Micro\Base\Domain\Event\DomainEventInterface:
+      tags: ['domain_event']
+    MicroModule\Base\Application\Command\CommandInterface:
+      tags: ['command']
+    MicroModule\Base\Application\Query\QueryInterface:
+      tags: ['query']
+
+imports:
+  - { resource: 'parameters.yaml' }
+  - { resource: './services/layer_infrastructure.yaml' }
+  - { resource: './services/layer_application.yaml' }
+  - { resource: './services/tactician.yaml' }

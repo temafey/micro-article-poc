@@ -1,0 +1,110 @@
+# docker-compose.yml - Base Infrastructure
+#
+# This file contains only shared infrastructure services (database, message queue, cache).
+# Use with runtime overlays for full stack:
+#
+#   PHP-FPM:     docker compose -f docker-compose.yml -f docker-compose.fpm.yml -f docker-compose.workers.yml up -d
+#   RoadRunner:  docker compose -f docker-compose.yml -f docker-compose.rr.yml -f docker-compose.workers.yml up -d
+#   FrankenPHP:  docker compose -f docker-compose.yml -f docker-compose.frank.yml -f docker-compose.workers.yml up -d
+#
+# Part of Phase 9: Infrastructure Modernization (TASK-028)
+
+services:
+  # PostgreSQL Database
+  test-micro-article-system-database:
+    image: postgres:18-alpine
+    hostname: ${APP_DATABASE_HOST}
+    container_name: ${APP_DATABASE_HOST}
+    ports:
+      - ${APP_DATABASE_EXT_PORT}:${APP_DATABASE_PORT}
+    volumes:
+      - postgres_data:/pgdata
+      # Init scripts for user setup (runs on first container start)
+      - ./.docker/postgres/init.d:/docker-entrypoint-initdb.d:ro
+      # Maintenance scripts for privilege management
+      - ./.docker/postgres/scripts:/scripts:ro
+    networks:
+      - ${DOCKER_NETWORK_NAME}
+    environment:
+      # Root/Admin user (superuser for migrations)
+      POSTGRES_USER: ${APP_DATABASE_ROOT_LOGIN:-postgres}
+      POSTGRES_PASSWORD: ${APP_DATABASE_ROOT_PASSWORD:-postgres}
+      POSTGRES_DB: ${APP_DATABASE_NAME}
+      POSTGRES_PORT: ${APP_DATABASE_PORT}
+      PGDATA: /pgdata
+      # Service user credentials (passed to init script)
+      APP_DATABASE_SERVICE_LOGIN: ${APP_DATABASE_SERVICE_LOGIN:-article_service}
+      APP_DATABASE_SERVICE_PASSWORD: ${APP_DATABASE_SERVICE_PASSWORD:-article_service_pwd}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${APP_DATABASE_ROOT_LOGIN:-postgres}"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+
+  # RabbitMQ Message Broker
+  test-micro-article-system-rabbitmq:
+    image: ${DOCKER_SERVER_HOST}/${DOCKER_PROJECT_PATH}/rabbitmq:${DOCKER_IMAGE_VERSION}
+    hostname: ${APP_RABBITMQ_HOST}
+    container_name: ${APP_RABBITMQ_HOST}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+    ports:
+      - ${APP_RABBITMQ_EXT_PORT}:${APP_RABBITMQ_PORT}
+      - ${APP_RABBITMQ_ADMIN_EXT_PORT}:${APP_RABBITMQ_ADMIN_PORT}
+    networks:
+      - ${DOCKER_NETWORK_NAME}
+    environment:
+      RABBITMQ_DEFAULT_VHOST: "vhost"
+
+  # Redis Cache
+  test-micro-article-system-redis:
+    hostname: ${APP_REDIS_HOST}
+    container_name: ${APP_REDIS_HOST}
+    image: redis:alpine
+    ports:
+      - ${APP_REDIS_EXT_PORT}:${APP_REDIS_PORT}
+    volumes:
+      - redis_data:/data
+    networks:
+      - ${DOCKER_NETWORK_NAME}
+
+  # PHP CLI Container (persistent, for PHPStorm debugging)
+  test-micro-article-system-cli:
+    container_name: ${CI_SERVICE_NAME}-cli
+    hostname: ${CI_SERVICE_NAME}-cli
+    image: ${DOCKER_SERVER_HOST}/${DOCKER_PROJECT_PATH}/php${DOCKER_PHP_VERSION}-fpm-dev:${DOCKER_IMAGE_VERSION}
+    # Keep container running for PHPStorm to connect
+    command: ["tail", "-f", "/dev/null"]
+    restart: unless-stopped
+    user: 1000:1000
+    volumes:
+      - ./:/app:rw
+      - ~/.composer/cache/:/.composer_cache/:rw
+      - ./.docker/php${DOCKER_PHP_VERSION}-fpm-dev/development-config.ini:/usr/local/etc/php/conf.d/development-config.ini
+    networks:
+      - ${DOCKER_NETWORK_NAME}
+    environment:
+      # OpenTelemetry configuration (TASK-035)
+      OTEL_PHP_AUTOLOAD_ENABLED: "${OTEL_PHP_AUTOLOAD_ENABLED:-true}"
+      OTEL_SERVICE_NAME: "${OTEL_SERVICE_NAME:-micro-article-service}"
+      OTEL_SERVICE_VERSION: "${OTEL_SERVICE_VERSION:-1.0.0}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://test-otel-lgtm:4318}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}"
+      OTEL_TRACES_EXPORTER: "${OTEL_TRACES_EXPORTER:-otlp}"
+      OTEL_METRICS_EXPORTER: "${OTEL_METRICS_EXPORTER:-otlp}"
+      OTEL_LOGS_EXPORTER: "${OTEL_LOGS_EXPORTER:-otlp}"
+      OTEL_RESOURCE_ATTRIBUTES: "${OTEL_RESOURCE_ATTRIBUTES:-service.namespace=micro,deployment.environment=development}"
+      OTEL_TRACES_SAMPLER: "${OTEL_TRACES_SAMPLER:-parentbased_always_on}"
+      # CRITICAL: Use Cumulative temporality for Prometheus compatibility (TASK-14.5)
+      OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: "${OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE:-cumulative}"
+
+networks:
+  test_article_net:
+    name: ${DOCKER_NETWORK_NAME}
+    driver: bridge
+    external: true
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:

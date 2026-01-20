@@ -1,0 +1,147 @@
+name: Mutation Testing
+
+# =============================================================================
+# CURRENTLY DISABLED - Enable when unit tests are stable
+# =============================================================================
+# To enable: Change workflow_dispatch to push/pull_request triggers
+# Prerequisites: All PHPUnit tests must pass with 60%+ code coverage
+
+on:
+  # Manual trigger only - tests not yet ready for automated mutation testing
+  workflow_dispatch:
+    inputs:
+      min_msi:
+        description: 'Minimum Mutation Score Indicator (0-100)'
+        required: false
+        default: '0'
+      filter:
+        description: 'Filter mutations to specific path (e.g., src/Article/Domain)'
+        required: false
+        default: ''
+
+  # Uncomment when tests are stable:
+  # push:
+  #   branches: [main, develop]
+  #   paths:
+  #     - 'src/**'
+  #     - 'tests/**'
+  #     - 'infection.json5'
+  #     - 'phpunit.xml.dist'
+  # pull_request:
+  #   branches: [main, develop]
+  #   paths:
+  #     - 'src/**'
+  #     - 'tests/**'
+
+jobs:
+  mutation-testing:
+    name: Infection Mutation Testing
+    runs-on: ubuntu-latest
+    # Enable when tests are ready
+    # if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_pgsql, redis, amqp
+          coverage: pcov
+          ini-values: memory_limit=1G
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Verify tests pass
+        run: vendor/bin/phpunit --testsuite='Project Test Suite' --stop-on-failure
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+
+      - name: Run Infection
+        run: |
+          FILTER_ARG=""
+          MSI_ARG=""
+
+          if [ -n "${{ github.event.inputs.filter }}" ]; then
+            FILTER_ARG="--filter=${{ github.event.inputs.filter }}"
+          fi
+
+          if [ -n "${{ github.event.inputs.min_msi }}" ] && [ "${{ github.event.inputs.min_msi }}" != "0" ]; then
+            MSI_ARG="--min-msi=${{ github.event.inputs.min_msi }} --min-covered-msi=${{ github.event.inputs.min_msi }}"
+          fi
+
+          vendor/bin/infection --threads=4 $FILTER_ARG $MSI_ARG
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          INFECTION_BADGE_API_KEY: ${{ secrets.INFECTION_BADGE_API_KEY }}
+
+      - name: Upload mutation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report
+          path: |
+            var/infection/infection.html
+            var/infection/infection.json
+            var/infection/per-mutator.md
+          retention-days: 30
+
+      - name: Comment PR with MSI
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              const report = JSON.parse(fs.readFileSync('var/infection/infection.json', 'utf8'));
+              const msi = report.stats.msi.toFixed(2);
+              const covered = report.stats.mutationCodeCoverage.toFixed(2);
+              const killed = report.stats.killedCount;
+              const escaped = report.stats.escapedCount;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## Mutation Testing Results\n\n| Metric | Value |\n|--------|-------|\n| MSI | ${msi}% |\n| Covered MSI | ${covered}% |\n| Killed | ${killed} |\n| Escaped | ${escaped} |\n\n[View full report in artifacts](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+              });
+            } catch (e) {
+              console.log('Could not read infection report:', e.message);
+            }
+
+  # Scheduled comprehensive mutation testing (weekly)
+  # Uncomment when tests are stable:
+  # mutation-testing-scheduled:
+  #   name: Comprehensive Mutation Testing (Weekly)
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'schedule'
+  #   steps:
+  #     # Same as above but with higher thresholds and full coverage

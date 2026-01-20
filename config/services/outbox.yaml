@@ -1,0 +1,164 @@
+parameters:
+  outbox.otel_service_name_default: 'article-microservice'
+  outbox.otel_service_version_default: '1.0.0'
+  outbox.topic_prefix_default: 'events.'
+  outbox.routing_key_prefix_default: 'event.'
+  outbox.task_enabled_default: true
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  # ==========================================================================
+  # TASK 14.1: Database & Core Components
+  # ==========================================================================
+
+  # Outbox Repository Implementation
+  Micro\Component\Common\Infrastructure\Outbox\DbalOutboxRepository:
+    arguments:
+      - '@doctrine.dbal.default_connection'
+
+  # Repository Interface Alias
+  Micro\Component\Common\Domain\Outbox\OutboxRepositoryInterface:
+    alias: Micro\Component\Common\Infrastructure\Outbox\DbalOutboxRepository
+    public: true
+
+  # ==========================================================================
+  # TASK 14.2: EventStore Decorator (OutboxAwareEventStore)
+  # ==========================================================================
+
+  # Feature Flag for Outbox Pattern
+  Micro\Component\Common\Infrastructure\Outbox\OutboxFeatureFlag:
+    factory: ['Micro\Component\Common\Infrastructure\Outbox\OutboxFeatureFlag', 'fromEnv']
+
+  # Domain Event Serializer
+  Micro\Component\Common\Infrastructure\Outbox\BroadwayDomainEventSerializer:
+    arguments:
+      $payloadSerializer: '@broadway.serializer.payload'
+      $metadataSerializer: '@broadway.serializer.metadata'
+      $topicPrefix: '%env(default:outbox.topic_prefix_default:OUTBOX_EVENT_TOPIC_PREFIX)%'
+      $routingKeyPrefix: '%env(default:outbox.routing_key_prefix_default:OUTBOX_ROUTING_KEY_PREFIX)%'
+
+  # Serializer Interface Alias
+  Micro\Component\Common\Domain\Outbox\DomainEventSerializerInterface:
+    alias: Micro\Component\Common\Infrastructure\Outbox\BroadwayDomainEventSerializer
+
+  # EventStore Decorator - Intercepts event storage and writes to outbox
+  Micro\Component\Common\Infrastructure\Outbox\OutboxAwareEventStore:
+    decorates: 'broadway.event_store'
+    decoration_priority: -10
+    arguments:
+      $inner: '@.inner'
+      $outboxRepository: '@Micro\Component\Common\Domain\Outbox\OutboxRepositoryInterface'
+      $serializer: '@Micro\Component\Common\Domain\Outbox\DomainEventSerializerInterface'
+      $metrics: '@Micro\Component\Common\Infrastructure\Outbox\Metrics\OutboxMetricsInterface'
+      $logger: '@logger'
+    tags:
+      - { name: monolog.logger, channel: outbox }
+
+  # ==========================================================================
+  # TASK 14.3: Task Producer Decorator (OutboxAwareTaskProducer)
+  # ==========================================================================
+
+  # Task Producer Decorator - Intercepts task commands and writes to outbox
+  Micro\Component\Common\Infrastructure\Outbox\OutboxAwareTaskProducer:
+    decorates: 'enqueue.client.task.producer'
+    decoration_priority: -10
+    arguments:
+      $inner: '@.inner'
+      $outboxRepository: '@Micro\Component\Common\Domain\Outbox\OutboxRepositoryInterface'
+      $logger: '@logger'
+      $enabled: '%env(bool:default:outbox.task_enabled_default:OUTBOX_TASK_ENABLED)%'
+    tags:
+      - { name: monolog.logger, channel: outbox }
+
+  # Interface Alias for Task Producer
+  Micro\Component\Common\Infrastructure\Outbox\OutboxAwareProducerInterface:
+    alias: Micro\Component\Common\Infrastructure\Outbox\OutboxAwareTaskProducer
+    public: true
+
+  # ==========================================================================
+  # TASK 14.4: Background Publisher Components
+  # ==========================================================================
+
+  # Event Publisher - uses QueueEventInterface for domain events
+  # Deserializes Broadway events from outbox and publishes to RabbitMQ
+  Micro\Component\Common\Infrastructure\Outbox\Publisher\EventPublisher:
+    arguments:
+      $queueEventProducer: '@MicroModule\EventQueue\Domain\EventHandling\QueueEventInterface'
+      $logger: '@logger'
+    tags:
+      - { name: monolog.logger, channel: outbox }
+
+  # Task Publisher - uses inner ProducerInterface for task commands
+  # IMPORTANT: Uses .inner to bypass OutboxAwareTaskProducer decorator (avoid infinite loop)
+  Micro\Component\Common\Infrastructure\Outbox\Publisher\TaskPublisher:
+    arguments:
+      $taskProducer: '@Micro\Component\Common\Infrastructure\Outbox\OutboxAwareTaskProducer.inner'
+      $logger: '@logger'
+    tags:
+      - { name: monolog.logger, channel: outbox }
+
+  # Unified Publisher - routes messages by type with OpenTelemetry tracing
+  Micro\Component\Common\Infrastructure\Outbox\Publisher\OutboxPublisher:
+    arguments:
+      $eventPublisher: '@Micro\Component\Common\Infrastructure\Outbox\Publisher\EventPublisher'
+      $taskPublisher: '@Micro\Component\Common\Infrastructure\Outbox\Publisher\TaskPublisher'
+      $tracerFactory: '@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory'
+      $logger: '@logger'
+    tags:
+      - { name: monolog.logger, channel: outbox }
+
+  # Publisher Interface Alias
+  Micro\Component\Common\Infrastructure\Outbox\Publisher\OutboxPublisherInterface:
+    alias: 'Micro\Component\Common\Infrastructure\Outbox\Publisher\OutboxPublisher'
+
+  # ==========================================================================
+  # TASK 14.4: Console Commands
+  # ==========================================================================
+
+  # Polling Publisher Command - polls outbox and publishes pending messages
+  Micro\Component\Common\Infrastructure\Console\PublishOutboxCommand:
+    arguments:
+      $outboxRepository: '@Micro\Component\Common\Domain\Outbox\OutboxRepositoryInterface'
+      $publisher: '@Micro\Component\Common\Infrastructure\Outbox\Publisher\OutboxPublisherInterface'
+      $metrics: '@Micro\Component\Common\Infrastructure\Outbox\Metrics\OutboxMetricsInterface'
+      $logger: '@logger'
+    tags:
+      - { name: 'console.command' }
+      - { name: monolog.logger, channel: outbox }
+
+  # ==========================================================================
+  # TASK 14.5: Monitoring & Cleanup Components
+  # ==========================================================================
+
+  # MeterFactory - creates OpenTelemetry Meter instances
+  Micro\Component\Common\Infrastructure\Observability\Service\MeterFactory:
+    arguments:
+      $serviceName: '%env(default:outbox.otel_service_name_default:OTEL_SERVICE_NAME)%'
+      $serviceVersion: '%env(default:outbox.otel_service_version_default:OTEL_SERVICE_VERSION)%'
+
+  # OpenTelemetry Metrics Implementation
+  Micro\Component\Common\Infrastructure\Outbox\Metrics\OpenTelemetryOutboxMetrics:
+    arguments:
+      $meterFactory: '@Micro\Component\Common\Infrastructure\Observability\Service\MeterFactory'
+
+  # Null Metrics Implementation (for testing/disabled metrics)
+  Micro\Component\Common\Infrastructure\Outbox\Metrics\NullOutboxMetrics: ~
+
+  # Metrics Interface Alias - uses OTel implementation by default
+  # Switch to NullOutboxMetrics to disable metrics collection
+  Micro\Component\Common\Infrastructure\Outbox\Metrics\OutboxMetricsInterface:
+    alias: 'Micro\Component\Common\Infrastructure\Outbox\Metrics\OpenTelemetryOutboxMetrics'
+
+  # Cleanup Console Command - removes old published messages
+  Micro\Component\Common\Infrastructure\Console\CleanupOutboxCommand:
+    arguments:
+      $outboxRepository: '@Micro\Component\Common\Domain\Outbox\OutboxRepositoryInterface'
+      $metrics: '@Micro\Component\Common\Infrastructure\Outbox\Metrics\OutboxMetricsInterface'
+      $logger: '@logger'
+    tags:
+      - { name: 'console.command' }
+      - { name: monolog.logger, channel: outbox }

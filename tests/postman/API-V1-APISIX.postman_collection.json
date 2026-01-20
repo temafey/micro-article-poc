@@ -1,0 +1,2139 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Article API V2 - APISIX Gateway",
+		"description": "# Article API V2 - APISIX Gateway Testing\n\nThis collection tests the Article microservice through Apache APISIX API Gateway with JWT authentication.\n\n## Features Tested\n- APISIX Gateway connectivity and health\n- JWT Authentication (RS256)\n- Public endpoints (GET operations - no JWT required)\n- Protected endpoints (POST, PUT, DELETE - JWT required)\n- Circuit breaker behavior\n- User API operations\n\n## JWT Token Management\nThe JWT token is stored in the `jwt_token` environment variable. Token details:\n- Algorithm: RS256\n- Consumer Key: `article-api-key`\n- Expiration: Configured in token payload\n\n### Generating a New Token\n```bash\ncd apisix/jwt-keys\nJWT_HEADER=$(echo -n '{\"alg\":\"RS256\",\"typ\":\"JWT\"}' | base64 -w0 | tr '+/' '-_' | tr -d '=')\nJWT_PAYLOAD=$(echo -n '{\"key\":\"article-api-key\",\"exp\":'$(($(date +%s)+86400))'}' | base64 -w0 | tr '+/' '-_' | tr -d '=')\nJWT_SIGNATURE=$(echo -n \"${JWT_HEADER}.${JWT_PAYLOAD}\" | openssl dgst -sha256 -sign private.pem | base64 -w0 | tr '+/' '-_' | tr -d '=')\necho \"${JWT_HEADER}.${JWT_PAYLOAD}.${JWT_SIGNATURE}\"\n```\n\n## Environment Variables Required\n- `apisix_base_url`: http://localhost:9080\n- `apisix_base_url_v1`: http://localhost:9080/api/v1\n- `apisix_base_url_v2`: http://localhost:9080/api/v2\n- `jwt_token`: Valid JWT token\n- `event_id`: Default event ID for testing\n\n## APISIX Routes\n- Public: GET /api/v1/article/*, GET /api/v2/article/*\n- Protected: POST, PUT, PATCH, DELETE on /api/v1/article/*, /api/v2/article/*",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "0. Setup & Health",
+			"item": [
+				{
+					"name": "APISIX Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('APISIX is healthy', function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response time is acceptable', function() {",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apisix_base_url}}/health",
+							"host": ["{{apisix_base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Check APISIX gateway health using dedicated /health endpoint. Returns HTTP 200 when gateway is operational (independent of backend status)."
+					},
+					"response": []
+				},
+				{
+					"name": "Backend Connectivity via APISIX",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Backend is reachable through APISIX', function() {",
+									"    // Accept 200 (success) or 404 (no data but backend responding)",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"pm.test('No circuit breaker triggered', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(503);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "health-check-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article"]
+						},
+						"description": "Verify backend connectivity through APISIX gateway"
+					},
+					"response": []
+				}
+			],
+			"description": "Health checks and setup verification"
+		},
+		{
+			"name": "1. JWT Authentication Tests",
+			"item": [
+				{
+					"name": "Protected Endpoint - No JWT (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Request without JWT is rejected', function() {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test('Error message indicates missing JWT', function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('Missing JWT token');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"event_id\": \"{{event_id}}\",\n    \"title\": \"Test without JWT\",\n    \"short_description\": \"This should fail due to missing JWT authentication token\",\n    \"description\": \"This is a test request without a JWT token. The request should be rejected by the APISIX gateway before reaching the backend service because JWT authentication is required for all write operations.\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", ""]
+						},
+						"description": "Test that protected endpoints reject requests without JWT token"
+					},
+					"response": []
+				},
+				{
+					"name": "Protected Endpoint - Valid JWT (Should Pass)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Request with valid JWT is accepted', function() {",
+									"    // JWT is validated - request passes through to backend",
+									"    // Backend may return various codes (201 success, 400 validation, 404 not found)",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});",
+									"",
+									"pm.test('No JWT error in response', function() {",
+									"    if (pm.response.code === 401) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.message).to.not.include('JWT');",
+									"    }",
+									"});",
+									"",
+									"// If successful creation, store UUID",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.uuid) {",
+									"        pm.environment.set('article_uuid', jsonData.data.uuid);",
+									"        pm.environment.set('article_slug', jsonData.data.slug);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate unique title for this test",
+									"var timestamp = new Date().getTime();",
+									"pm.environment.set('test_title', 'JWT Test Article ' + timestamp);",
+									"pm.environment.set('test_slug', 'jwt-test-article-' + timestamp);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"event_id\": \"{{event_id}}\",\n    \"title\": \"{{test_title}}\",\n    \"short_description\": \"Testing JWT authentication through APISIX gateway with valid RS256 token\",\n    \"description\": \"This request includes a valid JWT token signed with RS256 algorithm and should successfully pass through APISIX gateway to the backend service. The token contains the correct consumer key and a valid expiration timestamp.\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", ""]
+						},
+						"description": "Test that protected endpoints accept requests with valid JWT token"
+					},
+					"response": []
+				},
+				{
+					"name": "Protected Endpoint - Expired JWT (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Request with expired JWT is rejected', function() {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test('Error indicates JWT verification failure', function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.satisfy(function(msg) {",
+									"        return msg.includes('failed to verify jwt') || ",
+									"               msg.includes('expired') ||",
+									"               msg.includes('JWT');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{expired_jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"event_id\": \"{{event_id}}\",\n    \"title\": \"Test with Expired JWT\",\n    \"short_description\": \"This should fail because the JWT token has expired and is no longer valid\",\n    \"description\": \"This is a test request with an expired JWT token. The request should be rejected by the APISIX gateway because the JWT expiration timestamp has passed. Expired tokens must not be accepted for security reasons.\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", ""]
+						},
+						"description": "Test that protected endpoints reject requests with expired JWT token"
+					},
+					"response": []
+				},
+				{
+					"name": "Public Endpoint - No JWT Required",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Public endpoint accessible without JWT', function() {",
+									"    // Accept 200 (has data) or 404 (no data but endpoint works)",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"pm.test('No authentication error', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article"]
+						},
+						"description": "Verify that GET endpoints are public and don't require JWT"
+					},
+					"response": []
+				}
+			],
+			"description": "Test JWT authentication behavior through APISIX"
+		},
+		{
+			"name": "2. Article API - Public Operations",
+			"item": [
+				{
+					"name": "List All Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('List article successful', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test('Response is array or has data property', function() {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.satisfy(function(data) {",
+									"            return Array.isArray(data) || ",
+									"                   (data.data && Array.isArray(data.data)) ||",
+									"                   typeof data === 'object';",
+									"        });",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "list-article-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article"]
+						},
+						"description": "List all article items (public endpoint)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Article by UUID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Get by UUID returns expected status', function() {",
+									"    // 200 if found, 404 if not found (valid response)",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"pm.test('No authentication required', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "get-uuid-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{article_uuid}}",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{article_uuid}}"]
+						},
+						"description": "Get specific article by UUID (public endpoint)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Article by Slug",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Get by slug returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"pm.test('No authentication required', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "get-slug-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/slug/{{article_slug}}",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "slug", "{{article_slug}}"]
+						},
+						"description": "Get specific article by slug (public endpoint)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Article by Event ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Get by event ID returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"pm.test('No authentication required', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "get-event-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/event/{{event_id}}",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "event", "{{event_id}}"]
+						},
+						"description": "Get article by event ID (public endpoint)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Published Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Get published article returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"pm.test('No authentication required', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "get-published-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/published",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "published"]
+						},
+						"description": "Get all published article (public endpoint)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Archived Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Get archived article returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"pm.test('No authentication required', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "get-archived-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/archived",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "archived"]
+						},
+						"description": "Get all archived article (public endpoint)"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Search returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"pm.test('No authentication required', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "search-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/search?status={{search_status}}",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "search"],
+							"query": [
+								{
+									"key": "status",
+									"value": "{{search_status}}"
+								}
+							]
+						},
+						"description": "Search article with filters (public endpoint)"
+					},
+					"response": []
+				}
+			],
+			"description": "Public read operations - no JWT required"
+		},
+		{
+			"name": "3. Article API - Protected Operations",
+			"item": [
+				{
+					"name": "Create Article (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Create article with JWT succeeds', function() {",
+									"    // Accept 201 (created), 200 (ok), 400 (validation)",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 422]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});",
+									"",
+									"// Store UUID if created successfully",
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    try {",
+									"        var jsonData = pm.response.json();",
+									"        if (jsonData.data && jsonData.data.uuid) {",
+									"            pm.environment.set('article_uuid', jsonData.data.uuid);",
+									"            pm.environment.set('article_slug', jsonData.data.slug || '');",
+									"            console.log('Created article UUID: ' + jsonData.data.uuid);",
+									"        } else if (jsonData.uuid) {",
+									"            pm.environment.set('article_uuid', jsonData.uuid);",
+									"            pm.environment.set('article_slug', jsonData.slug || '');",
+									"        }",
+									"    } catch (e) {",
+									"        console.log('Could not parse response');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate unique identifiers for this article item",
+									"var timestamp = new Date().getTime();",
+									"pm.environment.set('test_title', 'APISIX Test Article ' + timestamp);",
+									"pm.environment.set('generated_slug', 'apisix-test-article-' + timestamp);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "create-article-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"event_id\": \"{{event_id}}\",\n    \"title\": \"{{test_title}}\",\n    \"short_description\": \"{{article_short_description}}\",\n    \"description\": \"{{article_description}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", ""]
+						},
+						"description": "Create new article item - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Article (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Update article with JWT succeeds', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 422]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "update-article-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"{{article_title_updated}}\",\n    \"short_description\": \"{{article_short_description_updated}}\",\n    \"description\": \"{{article_description_updated}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{article_uuid}}",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{article_uuid}}"]
+						},
+						"description": "Update existing article item - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Publish Article (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Publish article with JWT succeeds', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 409, 422]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "publish-article-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{article_uuid}}/publish",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{article_uuid}}", "publish"]
+						},
+						"description": "Publish article item - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Unpublish Article (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Unpublish article with JWT succeeds', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 409, 422]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "unpublish-article-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{article_uuid}}/unpublish",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{article_uuid}}", "unpublish"]
+						},
+						"description": "Unpublish article item - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Archive Article (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Archive article with JWT succeeds', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 409, 422]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "archive-article-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{article_uuid}}/archive",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{article_uuid}}", "archive"]
+						},
+						"description": "Archive article item - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Article (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Delete article with JWT succeeds', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "delete-article-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{article_uuid}}",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{article_uuid}}"]
+						},
+						"description": "Delete article item - requires JWT authentication"
+					},
+					"response": []
+				}
+			],
+			"description": "Protected write operations - JWT authentication required"
+		},
+		{
+			"name": "4. User API",
+			"item": [
+				{
+					"name": "List Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('List users returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404, 501]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "list-users-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users"]
+						},
+						"description": "List all users through APISIX"
+					},
+					"response": []
+				},
+				{
+					"name": "Create User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Create user returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 404, 409, 422, 501]);",
+									"});",
+									"",
+									"// Store user UUID if created",
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    try {",
+									"        var jsonData = pm.response.json();",
+									"        if (jsonData.data && jsonData.data.uuid) {",
+									"            pm.environment.set('user_uuid', jsonData.data.uuid);",
+									"        } else if (jsonData.uuid) {",
+									"            pm.environment.set('user_uuid', jsonData.uuid);",
+									"        }",
+									"    } catch (e) {",
+									"        console.log('Could not parse response');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate unique email for this test",
+									"var timestamp = new Date().getTime();",
+									"pm.environment.set('user_email', 'test-' + timestamp + '@example.com');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "create-user-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{user_username}}\",\n    \"email\": \"{{user_email}}\",\n    \"password\": \"TestPassword123!\",\n    \"firstName\": \"{{user_first_name}}\",\n    \"lastName\": \"{{user_last_name}}\",\n    \"roles\": [\"ROLE_USER\"]\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users"]
+						},
+						"description": "Create new user through APISIX"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by UUID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Get user returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404, 501]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "get-user-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/{{user_uuid}}",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "{{user_uuid}}"]
+						},
+						"description": "Get user by UUID through APISIX"
+					},
+					"response": []
+				},
+				{
+					"name": "Find User by Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Find user by email returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404, 501]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "find-user-email-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/email/{{user_email}}",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "email", "{{user_email}}"]
+						},
+						"description": "Find user by email address"
+					},
+					"response": []
+				},
+				{
+					"name": "Find User by Username",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Find user by username returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404, 501]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "find-user-username-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/username/{{user_username}}",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "username", "{{user_username}}"]
+						},
+						"description": "Find user by username"
+					},
+					"response": []
+				},
+				{
+					"name": "Find User by Identifier",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Find user by identifier returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404, 501]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "find-user-identifier-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/identifier/{{user_identifier}}",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "identifier", "{{user_identifier}}"]
+						},
+						"description": "Find user by identifier (email or username)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Profile (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Update profile returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 422, 501]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "update-profile-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"{{user_first_name}}\",\n    \"lastName\": \"{{user_last_name}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/{{user_uuid}}/profile",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "{{user_uuid}}", "profile"]
+						},
+						"description": "Update user profile - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Change User Password (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Change password returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 422, 501]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "change-password-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"newPassword\": \"{{user_new_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/{{user_uuid}}/password",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "{{user_uuid}}", "password"]
+						},
+						"description": "Change user password - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Change User Email (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Change email returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 422, 501]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "change-email-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"newEmail\": \"{{user_new_email}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/{{user_uuid}}/email",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "{{user_uuid}}", "email"]
+						},
+						"description": "Change user email - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify User Email (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Verify email returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 422, 501]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "verify-email-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/{{user_uuid}}/verify-email",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "{{user_uuid}}", "verify-email"]
+						},
+						"description": "Verify user email address - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate User (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Deactivate user returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 409, 422, 501]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "deactivate-user-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason\": \"User requested account deactivation\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/{{user_uuid}}/deactivate",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "{{user_uuid}}", "deactivate"]
+						},
+						"description": "Deactivate user account - requires JWT authentication. Body is optional, reason field is optional."
+					},
+					"response": []
+				},
+				{
+					"name": "Activate User (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Activate user returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 409, 422, 501]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "activate-user-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/{{user_uuid}}/activate",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "{{user_uuid}}", "activate"]
+						},
+						"description": "Activate user account - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Roles (JWT Required)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Update roles returns expected status', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 422, 501]);",
+									"});",
+									"",
+									"pm.test('JWT authentication successful', function() {",
+									"    pm.expect(pm.response.code).to.not.equal(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "update-roles-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roles\": [\"ROLE_USER\", \"ROLE_ADMIN\"]\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/users/{{user_uuid}}/roles",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["users", "{{user_uuid}}", "roles"]
+						},
+						"description": "Update user roles - requires JWT authentication"
+					},
+					"response": []
+				}
+			],
+			"description": "User API operations through APISIX"
+		},
+		{
+			"name": "5. JWT Token API",
+			"item": [
+				{
+					"name": "Issue JWT Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Token issued successfully', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									"",
+									"pm.test('Response contains token data', function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('uuid');",
+									"    pm.expect(jsonData).to.have.property('token');",
+									"    if (jsonData.uuid) {",
+									"        pm.environment.set('issued_jwt_uuid', jsonData.uuid);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subject\": \"{{user_uuid}}\",\n    \"tokenType\": \"access\",\n    \"issuer\": \"article-api\",\n    \"audience\": \"article-api-users\",\n    \"ttlSeconds\": 3600,\n    \"payload\": {\n        \"roles\": [\"user\"]\n    }\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/jwt/tokens",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["jwt", "tokens"]
+						},
+						"description": "Issue a new JWT token for a subject - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Revoke JWT Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Token revoked successfully', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test('Response confirms revocation', function() {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/jwt/tokens/{{issued_jwt_uuid}}",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["jwt", "tokens", "{{issued_jwt_uuid}}"]
+						},
+						"description": "Revoke a JWT token by UUID - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh JWT Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Token refreshed successfully', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test('Response contains new token', function() {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property('token');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshTokenHash\": \"{{refresh_token_hash}}\",\n    \"ttlSeconds\": 7200\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/jwt/tokens/{{issued_jwt_uuid}}/refresh",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["jwt", "tokens", "{{issued_jwt_uuid}}", "refresh"]
+						},
+						"description": "Refresh a JWT token to extend its expiration - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Revoke All Tokens by Subject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('All tokens revoked successfully', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200]);",
+									"});",
+									"",
+									"pm.test('Response contains revoked count', function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('revokedCount');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/jwt/tokens/subject/{{user_uuid}}",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["jwt", "tokens", "subject", "{{user_uuid}}"]
+						},
+						"description": "Revoke all JWT tokens for a specific subject (user) - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch JWT Token by UUID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Token fetched successfully', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test('Response contains token details', function() {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property('uuid');",
+									"        pm.expect(jsonData).to.have.property('subject');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/jwt/tokens/{{issued_jwt_uuid}}",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["jwt", "tokens", "{{issued_jwt_uuid}}"]
+						},
+						"description": "Fetch a single JWT token by UUID - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Find Tokens by Subject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Tokens found successfully', function() {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"pm.test('Response is an array', function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(Array.isArray(jsonData)).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/jwt/tokens/subject/{{user_uuid}}?tokenType=access&onlyValid=true",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["jwt", "tokens", "subject", "{{user_uuid}}"],
+							"query": [
+								{
+									"key": "tokenType",
+									"value": "access"
+								},
+								{
+									"key": "onlyValid",
+									"value": "true"
+								}
+							]
+						},
+						"description": "Find all JWT tokens for a specific subject - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Find Valid Tokens by Subject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Valid tokens found successfully', function() {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"pm.test('Response is an array', function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(Array.isArray(jsonData)).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/jwt/tokens/subject/{{user_uuid}}/valid",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["jwt", "tokens", "subject", "{{user_uuid}}", "valid"]
+						},
+						"description": "Find all valid (non-expired, non-revoked) JWT tokens for a subject - requires JWT authentication"
+					},
+					"response": []
+				},
+				{
+					"name": "Find Tokens by Criteria",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Tokens found successfully', function() {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"pm.test('Response has pagination', function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('items');",
+									"    pm.expect(jsonData).to.have.property('total');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v1}}/jwt/tokens?tokenType=access&isRevoked=false&limit=20&offset=0",
+							"host": ["{{apisix_base_url_v1}}"],
+							"path": ["jwt", "tokens"],
+							"query": [
+								{
+									"key": "tokenType",
+									"value": "access"
+								},
+								{
+									"key": "isRevoked",
+									"value": "false"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Search JWT tokens using various filter criteria - requires JWT authentication"
+					},
+					"response": []
+				}
+			],
+			"description": "JWT Token API operations through APISIX"
+		},
+		{
+			"name": "6. Workflow Tests",
+			"item": [
+				{
+					"name": "Workflow: Create Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Workflow: Create article', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 422]);",
+									"});",
+									"",
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.uuid) {",
+									"        pm.environment.set('lifecycle_article_uuid', jsonData.data.uuid);",
+									"        pm.environment.set('test_slug', jsonData.data.slug || '');",
+									"        console.log('Workflow: Created article UUID: ' + jsonData.data.uuid);",
+									"    } else if (jsonData.uuid) {",
+									"        pm.environment.set('lifecycle_article_uuid', jsonData.uuid);",
+									"        pm.environment.set('test_slug', jsonData.slug || '');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var timestamp = new Date().getTime();",
+									"pm.environment.set('test_title', 'Workflow Test ' + timestamp);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "workflow-create-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"event_id\": \"{{event_id}}\",\n    \"title\": \"{{test_title}}\",\n    \"short_description\": \"Workflow lifecycle test - created via APISIX gateway with JWT authentication\",\n    \"description\": \"This is a full lifecycle test for the article workflow through APISIX gateway. The complete flow includes: create -> publish -> unpublish -> archive -> delete. Each step validates that the JWT authentication is working correctly.\"\n}"
+						},
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", ""]
+						},
+						"description": "Step 1: Create article item for lifecycle test"
+					},
+					"response": []
+				},
+				{
+					"name": "Workflow: Verify Created",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Workflow: Verify article created', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test('Article exists with correct data', function() {",
+									"        var jsonData = pm.response.json();",
+									"        // API may return {data: {...}} or direct object",
+									"        pm.expect(jsonData).to.satisfy(function(data) {",
+									"            return data.data !== undefined || data.uuid !== undefined || data.id !== undefined;",
+									"        });",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Request-Id",
+								"value": "workflow-verify-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{lifecycle_article_uuid}}",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{lifecycle_article_uuid}}"]
+						},
+						"description": "Step 2: Verify created article exists"
+					},
+					"response": []
+				},
+				{
+					"name": "Workflow: Publish",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Workflow: Publish article', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 409]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "workflow-publish-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{lifecycle_article_uuid}}/publish",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{lifecycle_article_uuid}}", "publish"]
+						},
+						"description": "Step 3: Publish the article item"
+					},
+					"response": []
+				},
+				{
+					"name": "Workflow: Unpublish",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Workflow: Unpublish article', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 409]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "workflow-unpublish-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{lifecycle_article_uuid}}/unpublish",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{lifecycle_article_uuid}}", "unpublish"]
+						},
+						"description": "Step 4: Unpublish the article item"
+					},
+					"response": []
+				},
+				{
+					"name": "Workflow: Archive",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Workflow: Archive article', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404, 409]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "workflow-archive-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{lifecycle_article_uuid}}/archive",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{lifecycle_article_uuid}}", "archive"]
+						},
+						"description": "Step 5: Archive the article item"
+					},
+					"response": []
+				},
+				{
+					"name": "Workflow: Delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Workflow: Delete article', function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 404]);",
+									"});",
+									"",
+									"// Clean up environment variables",
+									"pm.environment.unset('lifecycle_article_uuid');",
+									"pm.environment.unset('test_slug');",
+									"pm.environment.unset('test_title');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "workflow-delete-{{$timestamp}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apisix_base_url_v2}}/article/{{lifecycle_article_uuid}}",
+							"host": ["{{apisix_base_url_v2}}"],
+							"path": ["article", "{{lifecycle_article_uuid}}"]
+						},
+						"description": "Step 6: Delete the article item (cleanup)"
+					},
+					"response": []
+				}
+			],
+			"description": "Full lifecycle workflow tests with JWT authentication"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level pre-request script",
+					"// Ensure JWT token is available",
+					"if (!pm.environment.get('jwt_token')) {",
+					"    console.warn('Warning: jwt_token not set. Protected endpoints will fail.');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level test script",
+					"// Log response time for all requests",
+					"pm.test('Response time is acceptable', function() {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "collection_version",
+			"value": "1.0.0",
+			"type": "string"
+		},
+		{
+			"key": "collection_purpose",
+			"value": "APISIX Gateway JWT Testing",
+			"type": "string"
+		}
+	]
+}

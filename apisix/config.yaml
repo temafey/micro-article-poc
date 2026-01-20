@@ -1,0 +1,136 @@
+# APISIX Configuration
+# Part of Phase 8: API Gateway Modernization (TASK-023)
+#
+# This is the main APISIX configuration file.
+# Routes and upstreams are defined in apisix.yaml (standalone mode).
+
+apisix:
+  node_listen: 9080
+  enable_admin: true
+  enable_ipv6: false
+  enable_control: true
+  control:
+    ip: "0.0.0.0"
+    port: 9090
+
+  # SSL configuration
+  ssl:
+    enable: true
+    listen_port: 9443
+
+deployment:
+  # Standalone mode: Routes loaded from apisix.yaml, no etcd required
+  role: data_plane
+  role_data_plane:
+    config_provider: yaml
+  admin:
+    # Admin API still available for runtime inspection
+    admin_key_required: true
+    admin_key:
+      - name: "admin"
+        key: "edd1c9f034335f136f87ad84b625c8f1"  # Default admin key
+        role: admin
+      - name: "viewer"
+        key: "4054f7cf07e344346cd3f287985e76a2"
+        role: viewer
+    # Allow admin access from any IP in development
+    allow_admin:
+      - 0.0.0.0/0
+
+# Plugins enabled by default
+plugins:
+  - api-breaker
+  - authz-keycloak
+  - basic-auth
+  - batch-requests
+  - consumer-restriction
+  - cors
+  - echo
+  - fault-injection
+  - grpc-transcode
+  - hmac-auth
+  - http-logger
+  - ip-restriction
+  - jwt-auth
+  - kafka-logger
+  - key-auth
+  - limit-conn
+  - limit-count
+  - limit-req
+  - mocking
+  - node-status
+  - openid-connect
+  - opentelemetry     # TASK-036: OpenTelemetry tracing
+  - prometheus
+  - proxy-cache
+  - proxy-mirror
+  - proxy-rewrite
+  - redirect
+  - referer-restriction
+  - request-id
+  - request-validation
+  - response-rewrite
+  - serverless-post-function
+  - serverless-pre-function
+  - sls-logger
+  - syslog
+  - tcp-logger
+  - udp-logger
+  - uri-blocker
+  - wolf-rbac
+  - zipkin
+
+# Plugin metadata configurations
+plugin_attr:
+  # Prometheus metrics endpoint
+  prometheus:
+    export_uri: /apisix/prometheus/metrics
+    export_addr:
+      ip: "0.0.0.0"
+      port: 9091
+    # Enable metric labels for services and routes
+    enable_extra_labels: true
+    # Export latency histogram
+    enable_export_server_info: true
+
+  # Request ID generation
+  request-id:
+    header_name: X-Request-Id
+    include_in_response: true
+    algorithm: uuid
+
+  # Log format for structured logging
+  http-logger:
+    batch_max_size: 1000
+    max_retry_count: 3
+    retry_delay: 1
+
+  # TASK-036: OpenTelemetry tracing configuration
+  opentelemetry:
+    # OTLP HTTP endpoint (grafana/otel-lgtm)
+    collector:
+      address: "test-otel-lgtm:4318"
+      request_timeout: 3
+    # Batch processing for spans
+    batch_span_processor:
+      max_queue_size: 2048
+      batch_timeout: 5
+    # W3C Trace Context source
+    trace_id_source: x-request-id
+    set_ngx_var: true
+    # Resource attributes for service identification
+    resource:
+      service.name: apisix-gateway
+      service.version: "3.14.1"
+      deployment.environment: development
+      service.namespace: micro
+
+# Health check configuration
+health_check:
+  # Internal health check endpoint
+  shm_name: "shm_hc"
+  size: 5m
+
+# NOTE: plugin_metadata is NOT used in standalone mode (role: data_plane)
+# OpenTelemetry configuration is in plugin_attr section above (lines 109-126)
+# See GitHub Issue #11368 for details

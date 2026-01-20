@@ -1,0 +1,61 @@
+root = true
+
+# ----- Global (keep minimal to avoid hurting YAML/MD) -----
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Avoid setting indent_size globally; set per type
+
+# ----- PHP (PSR-12) -----
+[*.php]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+# PhpStorm (generic) — harmless defaults
+ij_wrap_on_typing = true
+ij_continuation_indent_size = 8
+
+# PhpStorm (PHP) — common, readable tweaks
+ij_php_blank_lines_after_imports = 1
+
+# ----- Blade/Twig templates -----
+[*.blade.php]
+indent_style = space
+indent_size = 4
+
+[*.twig]
+indent_style = space
+indent_size = 4
+
+# ----- Symfony/Laravel config files -----
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.xml]
+indent_style = space
+indent_size = 2
+
+[*.{json,jsonc}]
+indent_style = space
+indent_size = 2
+
+# ----- Frontend bits (customize to your stack) -----
+[*.{js,jsx,ts,tsx,vue}]
+indent_style = space
+indent_size = 2
+
+[*.{css,scss,less}]
+indent_style = space
+indent_size = 2
+
+# ----- Docs & dotfiles -----
+[*.md]
+trim_trailing_whitespace = false
+
+[*.sh]
+end_of_line = lf

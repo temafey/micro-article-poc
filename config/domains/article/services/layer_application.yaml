@@ -1,0 +1,24 @@
+services:
+  _defaults:
+    public: true
+
+  # Dto
+  article.application.dto.factory:
+    class: Micro\Article\Application\Factory\DtoFactory
+    arguments:
+      - '@Micro\Component\Common\Infrastructure\Mapper\DtoMapperInterface'
+
+  article.application.processor.job_program_processor.article:
+    class: Micro\Article\Application\Processor\JobProgramProcessor
+    arguments:
+      - '@Enqueue\JobQueue\JobRunner'
+      - '@tactician.commandbus.command.article'
+      - '@Micro\Article\Application\Factory\CommandFactoryInterface'
+      - '@broadway.event_dispatcher'
+    calls:
+      - [ setLogger, [ '@logger' ] ]
+    tags:
+      - { name: 'enqueue.command_subscriber', client: 'article' }
+
+  Micro\Article\Application\Processor\JobProgramProcessor:
+    alias: article.application.processor.job_program_processor.article

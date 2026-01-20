@@ -1,0 +1,38 @@
+# FrankenPHP Worker Mode Configuration
+# Only loaded when running under FrankenPHP (detected via FRANKENPHP_CONFIG env)
+
+# Check if FrankenPHP is active
+when@frankenphp:
+    framework:
+        # Disable session for stateless API
+        session:
+            enabled: false
+
+        # HTTP cache for FrankenPHP
+        http_cache:
+            enabled: true
+
+    # Worker mode logging - more aggressive for worker stability
+    monolog:
+        handlers:
+            main:
+                type: stream
+                path: "php://stderr"
+                level: warning
+                formatter: monolog.formatter.json
+
+services:
+    # Worker Reset Subscriber - clears EntityManager between requests
+    Micro\Component\Common\Infrastructure\Worker\WorkerResetSubscriber:
+        arguments:
+            $doctrine: '@?doctrine'
+            $resettableServices: !tagged_iterator kernel.reset
+            $logger: '@?logger'
+        tags:
+            - { name: kernel.event_subscriber }
+
+    # Tag services that need reset between worker requests
+    # Example:
+    # App\Service\StatefulService:
+    #     tags:
+    #         - { name: kernel.reset }

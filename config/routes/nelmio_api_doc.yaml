@@ -1,0 +1,60 @@
+app.swagger_json:
+  path: /api/doc.json
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger, area: v2 }
+
+app.swagger_yaml:
+  path: /api/doc.yaml
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_yaml, area: v2 }
+
+app.swagger_ui:
+  path: /api/docs
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_ui, area: v2 }
+
+# V1 API Documentation
+app.swagger_v1_json:
+  path: /api/v1/doc.json
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger, area: v1 }
+
+app.swagger_v1_yaml:
+  path: /api/v1/doc.yaml
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_yaml, area: v1 }
+
+app.swagger_v1_json_short:
+  path: /api/v1/doc
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger, area: v1 }
+
+app.swagger_v1_ui:
+  path: /api/v1/docs
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_ui, area: v1 }
+
+# V2 API Documentation
+app.swagger_v2_json:
+  path: /api/v2/doc.json
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger, area: v2 }
+
+app.swagger_v2_yaml:
+  path: /api/v2/doc.yaml
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_yaml, area: v2 }
+
+app.swagger_v2_json_short:
+  path: /api/v2/doc
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger, area: v2 }
+
+app.swagger_v2_ui:
+  path: /api/v2/docs
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_ui, area: v2 }
+
+kernel:
+  resource: ../../src/Kernel.php
+  type: attribute

@@ -1,0 +1,99 @@
+# docker-compose.frank.yml - FrankenPHP Runtime Overlay
+#
+# FrankenPHP HTTP server (replaces nginx + PHP-FPM).
+# Use with base infrastructure:
+#   docker compose -f docker-compose.yml -f docker-compose.frank.yml -f docker-compose.workers.yml up -d
+#
+# Ports:
+#   8081 - HTTP API
+#   9181 - Prometheus metrics (future)
+#   2115 - Health check (future)
+#
+# Part of Phase 9: Infrastructure Modernization (TASK-029, TASK-031)
+
+services:
+  # FrankenPHP HTTP Server
+  test-micro-article-system-http-frankenphp:
+    container_name: ${CI_SERVICE_NAME}-frankenphp
+    hostname: ${CI_SERVICE_NAME}-frankenphp
+    build:
+      context: .
+      dockerfile: .docker/frankenphp/Dockerfile
+    restart: always
+    user: 1000:1000
+    volumes:
+      - ./:/app:rw
+      - ~/.composer/cache/:/.composer_cache/:rw
+    working_dir: /app
+    networks:
+      - ${DOCKER_NETWORK_NAME}
+    ports:
+      # HTTP server (8081 to avoid conflict with FPM on 80)
+      - "8081:80"
+      # Prometheus metrics (future implementation)
+      # - "9181:9181"
+      # Health check endpoint (future implementation)
+      # - "2115:2115"
+    environment:
+      APP_ENV: "${APP_ENV:-dev}"
+      APP_DEBUG: "${APP_DEBUG:-1}"
+      APP_SECRET: "${APP_SECRET}"
+      # Database (service user with restricted privileges)
+      APP_DATABASE_HOST: ${APP_DATABASE_HOST}
+      APP_DATABASE_PORT: ${APP_DATABASE_PORT}
+      APP_DATABASE_NAME: ${APP_DATABASE_NAME}
+      APP_DATABASE_LOGIN: ${APP_DATABASE_LOGIN}
+      APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD}
+      # Redis
+      APP_REDIS_HOST: ${APP_REDIS_HOST}
+      APP_REDIS_PORT: ${APP_REDIS_PORT}
+      # RabbitMQ
+      APP_RABBITMQ_HOST: ${APP_RABBITMQ_HOST}
+      APP_RABBITMQ_PORT: ${APP_RABBITMQ_PORT}
+      APP_RABBITMQ_VHOST: ${APP_RABBITMQ_VHOST}
+      APP_RABBITMQ_USER: ${APP_RABBITMQ_USER}
+      APP_RABBITMQ_PASS: ${APP_RABBITMQ_PASS}
+      # FrankenPHP specific
+      SERVER_NAME: ":80"
+      FRANKENPHP_CONFIG: "worker ./public/index.php"
+      FRANKENPHP_NUM_WORKERS: "${FRANKENPHP_NUM_WORKERS:-4}"
+      # PHP OPcache (optimized for worker mode)
+      PHP_OPCACHE_JIT: "1255"
+      PHP_OPCACHE_JIT_BUFFER_SIZE: "128M"
+      # PERF: Default to 0 (no file checks) - set to 1 in .env for development
+      PHP_OPCACHE_VALIDATE_TIMESTAMPS: "${PHP_OPCACHE_VALIDATE_TIMESTAMPS:-0}"
+      # Security
+      CSRF_PROTECTION_ENABLED: ${CSRF_PROTECTION_ENABLED:-false}
+      MESSAGE_REQUIRE_SIGNATURE: ${MESSAGE_REQUIRE_SIGNATURE:-false}
+      MESSAGE_LIFETIME: ${MESSAGE_LIFETIME:-300}
+      # Xdebug (off by default)
+      XDEBUG_MODE: "${XDEBUG_MODE:-off}"
+      # OpenTelemetry configuration (ADR-014)
+      OTEL_PHP_AUTOLOAD_ENABLED: "${OTEL_PHP_AUTOLOAD_ENABLED:-true}"
+      OTEL_SERVICE_NAME: "${OTEL_SERVICE_NAME:-micro-article-service}"
+      OTEL_SERVICE_VERSION: "${OTEL_SERVICE_VERSION:-1.0.0}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://test-otel-lgtm:4318}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}"
+      OTEL_TRACES_EXPORTER: "${OTEL_TRACES_EXPORTER:-otlp}"
+      OTEL_METRICS_EXPORTER: "${OTEL_METRICS_EXPORTER:-otlp}"
+      OTEL_LOGS_EXPORTER: "${OTEL_LOGS_EXPORTER:-otlp}"
+      OTEL_RESOURCE_ATTRIBUTES: "${OTEL_RESOURCE_ATTRIBUTES:-service.namespace=micro,deployment.environment=development}"
+      OTEL_TRACES_SAMPLER: "${OTEL_TRACES_SAMPLER:-parentbased_always_on}"
+      # CRITICAL: Use Cumulative temporality for Prometheus compatibility (TASK-14.5)
+      OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: "${OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE:-cumulative}"
+      OTEL_ENABLED: "${OTEL_ENABLED:-true}"
+    # Note: API Gateway routing handled by APISIX (see docker-compose.apisix.yml)
+    # Traefik labels removed as part of Phase 8 (TASK-024)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      test-micro-article-system-database:
+        condition: service_healthy
+      test-micro-article-system-rabbitmq:
+        condition: service_started
+      test-micro-article-system-redis:
+        condition: service_started

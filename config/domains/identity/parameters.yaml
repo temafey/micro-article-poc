@@ -1,0 +1,26 @@
+parameters:
+    ###############################
+    # Identity Domain Parameters
+    ###############################
+
+    # JWT Configuration
+    identity.jwt.secret_key: '%env(JWT_SECRET_KEY)%'
+    identity.jwt.public_key: '%env(JWT_PUBLIC_KEY)%'
+    identity.jwt.passphrase: '%env(JWT_PASSPHRASE)%'
+    identity.jwt.algorithm: '%env(JWT_ALGORITHM)%'
+    identity.jwt.issuer: '%env(JWT_ISSUER)%'
+    identity.jwt.access_token_ttl: '%env(int:JWT_ACCESS_TOKEN_TTL)%'
+    identity.jwt.refresh_token_ttl: '%env(int:JWT_REFRESH_TOKEN_TTL)%'
+
+    # User Configuration
+    identity.user.password_min_length: 8
+    identity.user.password_max_length: 128
+    identity.user.username_min_length: 3
+    identity.user.username_max_length: 50
+
+    # Read Model Tables
+    identity.jwt.read_model_table: 'jwt_token_read_model'
+    identity.user.read_model_table: 'user_read_model'
+
+    # Event Store Configuration
+    identity.event_store.table: 'identity_event_store'

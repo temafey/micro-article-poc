@@ -1,0 +1,101 @@
+{
+    // Infection Configuration for Article Microservice
+    // DDD/Event Sourcing architecture with layer-specific mutation strategies
+    //
+    // PREREQUISITES:
+    // - All PHPUnit tests must pass: ./vendor/bin/phpunit
+    // - Minimum 60% code coverage recommended
+    //
+    // Run: ./vendor/bin/infection --threads=4
+
+    "$schema": "https://raw.githubusercontent.com/infection/infection/0.29.0/resources/schema.json",
+
+    // Source code directories to mutate
+    "source": {
+        "directories": [
+            "src/Article",
+            "src/Common"
+        ],
+        "excludes": [
+            // Framework bootstrapping
+            "Kernel.php",
+
+            // Infrastructure adapters (often require integration tests)
+            "Infrastructure/Repository/Storage",
+            "Infrastructure/Subscriber",
+
+            // Presentation layer (REST controllers often need integration tests)
+            "Presentation/Cli",
+
+            // Interfaces (no implementation to mutate)
+            "*Interface.php"
+        ]
+    },
+
+    // PHPUnit configuration
+    "phpUnit": {
+        "configDir": ".",
+        "customPath": "./vendor/bin/phpunit"
+    },
+
+    // Timeout for each mutant test run (seconds)
+    "timeout": 30,
+
+    // Logging configuration
+    "logs": {
+        // JSON log for CI parsing
+        "json": "var/infection/infection.json",
+
+        // HTML report for human review
+        "html": "var/infection/infection.html",
+
+        // Text summary
+        "text": "var/infection/infection.log",
+
+        // Per-mutator statistics
+        "perMutator": "var/infection/per-mutator.md",
+
+        // GitHub Actions annotation format (for CI)
+        "github": true
+    },
+
+    // Mutation Score Indicator thresholds
+    // Baseline MSI: 74.04% (established 2025-12-27)
+    // Phase 4B: Set conservative thresholds below baseline
+    "minMsi": 70,
+    "minCoveredMsi": 70,
+
+    // Test framework settings
+    "testFramework": "phpunit",
+    // Use filter to only run unit tests (tests/Unit directory)
+    "initialTestsPhpOptions": "",
+
+    // Mutators configuration
+    // Using @default with DDD-specific adjustments
+    "mutators": {
+        // Enable all default mutators
+        "@default": true,
+
+        // Specific mutator configurations for DDD patterns
+
+        // Disable TrueValue/FalseValue for readonly properties (common in VOs)
+        "TrueValue": {
+            "ignore": [
+                "Micro\\Article\\Domain\\ValueObject\\*"
+            ]
+        },
+
+        // MethodCallRemoval: Be careful with fluent interfaces
+        "MethodCallRemoval": {
+            "ignoreSourceCodeByRegex": [
+                "->set[A-Z].*\\(.*\\);"
+            ]
+        }
+    },
+
+    // Bootstrap file (same as PHPUnit)
+    "bootstrap": "tests/bootstrap.php",
+
+    // tmpDir for mutation testing artifacts
+    "tmpDir": "var/infection/tmp"
+}

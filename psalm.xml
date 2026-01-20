@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="4"
+    resolveFromConfigFile="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    findUnusedBaselineEntry="false"
+    findUnusedCode="false"
+    errorBaseline="psalm-baseline.xml"
+>
+    <projectFiles>
+        <directory name="src"/>
+        <ignoreFiles>
+            <directory name="vendor"/>
+            <directory name="var"/>
+            <directory name="config"/>
+            <directory name="tests"/>
+        </ignoreFiles>
+    </projectFiles>
+
+    <issueHandlers>
+        <!-- Suppress issues that are handled by PHPStan -->
+        <MissingConstructor errorLevel="suppress"/>
+        <PropertyNotSetInConstructor errorLevel="suppress"/>
+
+        <!-- TAINT ANALYSIS - Critical security issues NOT suppressed -->
+        <!-- TaintedSql, TaintedHtml, TaintedShell, TaintedHeader, etc. -->
+    </issueHandlers>
+</psalm>

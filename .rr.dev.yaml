@@ -1,0 +1,51 @@
+version: "3"
+
+server:
+  command: "php public/index.php"
+  env:
+    - APP_RUNTIME: Baldinof\RoadRunnerBundle\Runtime\Runtime
+
+http:
+  address: 0.0.0.0:8080
+  pool:
+    debug: true
+    num_workers: 2  # Fewer workers in dev for easier debugging
+    max_jobs: 100   # More frequent restarts in dev to pick up code changes
+  middleware: [ "static", "gzip" ]
+  uploads:
+    forbid: [ ".php", ".exe", ".bat" ]
+  static:
+    dir: "public"
+    forbid: [ ".php", ".htaccess" ]
+
+# RPC for metrics and worker management
+rpc:
+  listen: tcp://127.0.0.1:6001
+
+# Prometheus metrics endpoint
+metrics:
+  address: "0.0.0.0:9180"
+
+logs:
+  mode: development
+  channels:
+    http:
+      level: debug  # Log all HTTP requests in dev
+    server:
+      level: debug
+      mode: raw
+    metrics:
+      level: debug
+
+# Health check endpoint
+status:
+  address: "0.0.0.0:2114"
+
+# Reload workers when PHP files change (requires inotify)
+reload:
+  interval: 1s
+  patterns: [ ".php" ]
+  services:
+    http:
+      dirs: [ "src", "config" ]
+      recursive: true

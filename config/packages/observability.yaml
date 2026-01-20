@@ -1,0 +1,179 @@
+# =============================================================================
+# OpenTelemetry Observability Services Configuration (TASK-035)
+# =============================================================================
+# Provides distributed tracing instrumentation for:
+# - Tactician Command/Query Bus (middleware)
+# - Broadway EventBus (decorator)
+# - Monolog (trace context processor)
+#
+# Related: ADR-014-observability-stack-modernization.md
+#          TASK-035-application-instrumentation.md
+# =============================================================================
+
+parameters:
+  # Tracing enabled flag - controls TracingTrait behavior
+  tracing.is_enabled: '%env(bool:OTEL_ENABLED)%'
+
+services:
+  # ===========================================================================
+  # Tracer Client - provides TracerInterface for TracingTrait/TracerMiddleware
+  # ===========================================================================
+  tracing.client:
+    class: OpenTelemetry\API\Trace\TracerInterface
+    factory: ['@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory', 'getTracer']
+
+  # ===========================================================================
+  # Tracer Factory
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory:
+    arguments:
+      $serviceName: '%env(OTEL_SERVICE_NAME)%'
+      $serviceVersion: '%env(OTEL_SERVICE_VERSION)%'
+
+  # ===========================================================================
+  # Command Bus Middleware (Tactician)
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Observability\Middleware\OpenTelemetryCommandMiddleware:
+    arguments:
+      - '@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory'
+    tags:
+      - { name: 'tactician.middleware', command_bus: 'command.article', priority: 255 }
+      - { name: 'tactician.middleware', command_bus: 'query.article', priority: 255 }
+
+  # ===========================================================================
+  # EventBus Decorator (Broadway)
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Observability\EventBus\TracingEventBusDecorator:
+    decorates: broadway.event_handling.event_bus
+    decoration_priority: 10
+    arguments:
+      $innerBus: '@.inner'
+      $tracerFactory: '@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory'
+
+  # ===========================================================================
+  # Monolog Trace Context Processor
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Observability\Logging\TraceContextProcessor:
+    tags:
+      - { name: 'monolog.processor' }
+
+  # ===========================================================================
+  # Doctrine DBAL Tracing Middleware (ADR-014 Phase 3.2)
+  # ===========================================================================
+  # Instruments all database operations with OpenTelemetry spans:
+  # - Connection establishment (db.connect)
+  # - SQL queries (db.SELECT, db.INSERT, db.UPDATE, db.DELETE)
+  # - Transactions (db.transaction.begin, db.transaction.commit, db.transaction.rollback)
+  # - Parameter binding (counts and types only, no values for security)
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Observability\Doctrine\TracingDoctrineMiddleware:
+    arguments:
+      - '@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory'
+    tags:
+      - { name: 'doctrine.middleware', connection: 'default', priority: 10 }
+      - { name: 'doctrine.middleware', connection: 'migration', priority: 10 }
+
+  # ===========================================================================
+  # Saga Workflow Instrumentation (ADR-014 Phase 2.4)
+  # ===========================================================================
+  # Injects TracerFactory into sagas using TracedSagaTrait for distributed tracing.
+  # Each saga event handler is wrapped in a span: saga.{SagaName}.{EventName}
+  # ===========================================================================
+  Micro\Article\Application\Saga\ArticleCreationPublicationWorkflowSaga:
+    calls:
+      - [setTracerFactory, ['@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory']]
+
+  # ===========================================================================
+  # Redis Tracing (ADR-014 Phase 3.3)
+  # ===========================================================================
+  # Instruments all Redis operations with OpenTelemetry spans:
+  # - String operations (GET, SET, DEL, EXISTS, INCR, DECR)
+  # - Hash operations (HGET, HSET, HDEL, HGETALL)
+  # - List operations (LPUSH, RPUSH, LPOP, RPOP)
+  # - Set operations (SADD, SREM, SMEMBERS)
+  # - TTL operations (EXPIRE, TTL, PERSIST)
+  # - Key sanitization to prevent PII leakage
+  # - Cache hit/miss tracking for GET operations
+  #
+  # Implementation: TracingRedis extends \Redis (inheritance, not composition)
+  # This ensures type-compatibility with all Redis type-hints and prevents
+  # Symfony from inlining plain \Redis instances.
+  # ===========================================================================
+
+  # TracingRedis - extends \Redis with OpenTelemetry instrumentation
+  # Using inheritance pattern ensures all \Redis type-hints receive tracing
+  Micro\Component\Common\Infrastructure\Observability\Redis\TracingRedis:
+    calls:
+      - [connect, ['%redis.host%', '%redis.port%']]
+      - [initTracing, ['@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory']]
+
+  # Alias Redis to TracingRedis - all \Redis type-hints get the traced version
+  Redis:
+    alias: 'Micro\Component\Common\Infrastructure\Observability\Redis\TracingRedis'
+    public: true
+
+  # ===========================================================================
+  # RabbitMQ/AMQP Tracing (ADR-014 Phase 3.4)
+  # ===========================================================================
+  # Instruments all AMQP operations with OpenTelemetry spans:
+  # - Producer spans (amqp.{topic}.publish) with SpanKind::PRODUCER
+  # - Consumer spans (amqp.{topic}.process) with SpanKind::CONSUMER
+  # - W3C Trace Context propagation (traceparent, tracestate headers)
+  # - Distributed trace continuation across async boundaries
+  # - Message result tracking (ACK, REJECT, REQUEUE)
+  # ===========================================================================
+
+  # W3C Trace Context Propagator for AMQP messages
+  Micro\Component\Common\Infrastructure\Observability\Amqp\TraceContextPropagator: ~
+
+  # Alias QueueEventInterface to the tracing producer (for autowiring)
+  MicroModule\EventQueue\Domain\EventHandling\QueueEventInterface:
+    alias: 'tracing.queue_event.producer'
+
+  # Tracing decorator for main queue event producer
+  tracing.queue_event.producer:
+    class: Micro\Component\Common\Infrastructure\Observability\Amqp\TracingQueueEventProducer
+    decorates: event_queue.application.event_handling.queue_event.producer
+    decoration_priority: 10
+    arguments:
+      $innerProducer: '@.inner'
+      $tracerFactory: '@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory'
+      $topic: 'micro-platform.article.queueevent'
+
+  # Tracing decorator for global queue event producer
+  tracing.queue_event.producer.global:
+    class: Micro\Component\Common\Infrastructure\Observability\Amqp\TracingQueueEventProducer
+    decorates: event_queue.application.event_handling.queue_event.producer.global
+    decoration_priority: 10
+    arguments:
+      $innerProducer: '@.inner'
+      $tracerFactory: '@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory'
+      $topic: 'micro-platform.acl.article.queueevent'
+
+  # Tracing decorator for queue event processor
+  tracing.queue_event.processor:
+    class: Micro\Component\Common\Infrastructure\Observability\Amqp\TracingQueueEventProcessor
+    decorates: Micro\Article\Application\Processor\QueueEventProcessor
+    decoration_priority: 10
+    arguments:
+      $innerProcessor: '@.inner'
+      $tracerFactory: '@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory'
+      $propagator: '@Micro\Component\Common\Infrastructure\Observability\Amqp\TraceContextPropagator'
+      $topic: 'micro-platform.article.queueevent'
+
+  # ===========================================================================
+  # Test Commands (Internal Testing Only)
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Console\TestRedisTracingCommand:
+    arguments:
+      $redis: '@Redis'
+    tags:
+      - { name: 'console.command' }
+
+  Micro\Component\Common\Infrastructure\Console\TestAmqpTracingCommand:
+    autowire: false
+    arguments:
+      $queueEventProducer: '@tracing.queue_event.producer'
+      $tracerFactory: '@Micro\Component\Common\Infrastructure\Observability\Service\TracerFactory'
+    tags:
+      - { name: 'console.command' }

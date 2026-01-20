@@ -1,0 +1,1584 @@
+{
+  "version": "1.1",
+  "generated_at": "2025-12-29T11:50:49+00:00",
+  "source_path": "src/Article",
+  "test_base": "tests/Unit/Article",
+  "validation_summary": {
+    "syntax_check": "passed",
+    "phpunit_execution": "passed",
+    "total_tests": 928,
+    "total_assertions": 2002,
+    "deprecations": 8,
+    "errors": 0,
+    "failures": 0,
+    "validated_at": "2025-12-29T11:50:49+00:00"
+  },
+  "classes": {
+    "Micro\\Article\\Infrastructure\\Subscriber\\ArticleCacheInvalidationSubscriber": {
+      "source_path": "src/Article/Infrastructure/Subscriber/ArticleCacheInvalidationSubscriber.php",
+      "layer": "infrastructure_subscriber",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Infrastructure/Subscriber/ArticleCacheInvalidationSubscriberTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Infrastructure/Subscriber/ArticleCacheInvalidationSubscriberDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "notes": "Unit test - tests cache invalidation on all Article domain events",
+      "test_type": "unit",
+      "test_count": 11,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed",
+        "review_score": 95
+      }
+    },
+    "Micro\\Article\\Infrastructure\\Service\\SlugUniquenessChecker": {
+      "source_path": "src/Article/Infrastructure/Service/SlugUniquenessChecker.php",
+      "layer": "infrastructure_service",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Infrastructure/Service/SlugUniquenessCheckerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Infrastructure/Service/SlugUniquenessCheckerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Infrastructure\\Repository\\EntityStore\\ArticleRepository": {
+      "source_path": "src/Article/Infrastructure/Repository/EntityStore/ArticleRepository.php",
+      "layer": "infrastructure_repository",
+      "status": "done",
+      "test_path": "tests/Integration/Article/Infrastructure/Repository/EntityStore/ArticleRepositoryTest.php",
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-27T16:00:00+00:00",
+      "errors": [],
+      "notes": "Integration test - tests event sourcing repository with snapshotting",
+      "test_type": "integration",
+      "test_count": 6,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_list": "passed",
+        "review_score": 95
+      }
+    },
+    "Micro\\Article\\Infrastructure\\Repository\\Storage\\DBALReadModelStore": {
+      "source_path": "src/Article/Infrastructure/Repository/Storage/DBALReadModelStore.php",
+      "layer": "infrastructure_repository",
+      "status": "done",
+      "test_path": "tests/Integration/Article/Infrastructure/Repository/Storage/DBALReadModelStoreTest.php",
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-27T16:00:00+00:00",
+      "errors": [],
+      "notes": "Integration test - tests DBAL read model CRUD operations",
+      "test_type": "integration",
+      "test_count": 10,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_list": "passed",
+        "review_score": 95
+      }
+    },
+    "Micro\\Article\\Infrastructure\\Repository\\EventSourcingStore\\ArticleRepository": {
+      "source_path": "src/Article/Infrastructure/Repository/EventSourcingStore/ArticleRepository.php",
+      "layer": "infrastructure_repository",
+      "status": "done",
+      "test_path": "tests/Integration/Article/Infrastructure/Repository/EventSourcingStore/ArticleRepositoryTest.php",
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-27T16:00:00+00:00",
+      "errors": [],
+      "notes": "Integration test - tests Broadway event sourcing repository",
+      "test_type": "integration",
+      "test_count": 7,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_list": "passed",
+        "review_score": 95
+      }
+    },
+    "Micro\\Article\\Infrastructure\\Repository\\Query\\CachedArticleQueryRepository": {
+      "source_path": "src/Article/Infrastructure/Repository/Query/CachedArticleQueryRepository.php",
+      "layer": "infrastructure_repository",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Infrastructure/Repository/Query/CachedArticleQueryRepositoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Infrastructure/Repository/Query/CachedArticleQueryRepositoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "notes": "Unit test - tests cache stampede prevention with XFetch algorithm",
+      "test_type": "unit",
+      "test_count": 19,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed",
+        "review_score": 95
+      }
+    },
+    "Micro\\Article\\Infrastructure\\Repository\\Query\\ArticleRepository": {
+      "source_path": "src/Article/Infrastructure/Repository/Query/ArticleRepository.php",
+      "layer": "infrastructure_repository",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Infrastructure/Repository/Query/ArticleRepositoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Infrastructure/Repository/Query/ArticleRepositoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Infrastructure\\Repository\\TaskRepository": {
+      "source_path": "src/Article/Infrastructure/Repository/TaskRepository.php",
+      "layer": "infrastructure_repository",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Infrastructure/Repository/TaskRepositoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Infrastructure/Repository/TaskRepositoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Infrastructure\\Repository\\ReadModel\\ArticleRepository": {
+      "source_path": "src/Article/Infrastructure/Repository/ReadModel/ArticleRepository.php",
+      "layer": "infrastructure_repository",
+      "status": "done",
+      "test_path": "tests/Integration/Article/Infrastructure/Repository/ReadModel/ArticleRepositoryTest.php",
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-27T16:00:00+00:00",
+      "errors": [],
+      "notes": "Integration test - tests read model repository CRUD operations",
+      "test_type": "integration",
+      "test_count": 8,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_list": "passed",
+        "review_score": 95
+      }
+    },
+    "Micro\\Article\\Application\\Saga\\ArticleCreationPublicationWorkflowSaga": {
+      "source_path": "src/Article/Application/Saga/ArticleCreationPublicationWorkflowSaga.php",
+      "layer": "application_saga",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Saga/ArticleCreationPublicationWorkflowSagaTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Saga/ArticleCreationPublicationWorkflowSagaDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\ArticleArchiveHandler": {
+      "source_path": "src/Article/Application/CommandHandler/ArticleArchiveHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/ArticleArchiveHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/ArticleArchiveHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\ArticlePublishHandler": {
+      "source_path": "src/Article/Application/CommandHandler/ArticlePublishHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/ArticlePublishHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/ArticlePublishHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\ArticleCreateHandler": {
+      "source_path": "src/Article/Application/CommandHandler/ArticleCreateHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/ArticleCreateHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/ArticleCreateHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\Task\\ArticleArchiveTaskCommandHandler": {
+      "source_path": "src/Article/Application/CommandHandler/Task/ArticleArchiveTaskCommandHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/Task/ArticleArchiveTaskCommandHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/Task/ArticleArchiveTaskCommandHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\Task\\ArticleCreateTaskCommandHandler": {
+      "source_path": "src/Article/Application/CommandHandler/Task/ArticleCreateTaskCommandHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/Task/ArticleCreateTaskCommandHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/Task/ArticleCreateTaskCommandHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\Task\\ArticleUpdateTaskCommandHandler": {
+      "source_path": "src/Article/Application/CommandHandler/Task/ArticleUpdateTaskCommandHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/Task/ArticleUpdateTaskCommandHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/Task/ArticleUpdateTaskCommandHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\Task\\ArticleUnpublishTaskCommandHandler": {
+      "source_path": "src/Article/Application/CommandHandler/Task/ArticleUnpublishTaskCommandHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/Task/ArticleUnpublishTaskCommandHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/Task/ArticleUnpublishTaskCommandHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\Task\\ArticlePublishTaskCommandHandler": {
+      "source_path": "src/Article/Application/CommandHandler/Task/ArticlePublishTaskCommandHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/Task/ArticlePublishTaskCommandHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/Task/ArticlePublishTaskCommandHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\Task\\ArticleDeleteTaskCommandHandler": {
+      "source_path": "src/Article/Application/CommandHandler/Task/ArticleDeleteTaskCommandHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/Task/ArticleDeleteTaskCommandHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/Task/ArticleDeleteTaskCommandHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\ArticleDeleteHandler": {
+      "source_path": "src/Article/Application/CommandHandler/ArticleDeleteHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/ArticleDeleteHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/ArticleDeleteHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\ArticleUpdateHandler": {
+      "source_path": "src/Article/Application/CommandHandler/ArticleUpdateHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/ArticleUpdateHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/ArticleUpdateHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\CommandHandler\\ArticleUnpublishHandler": {
+      "source_path": "src/Article/Application/CommandHandler/ArticleUnpublishHandler.php",
+      "layer": "application_commandhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/CommandHandler/ArticleUnpublishHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/CommandHandler/ArticleUnpublishHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Projector\\ArticleProjector": {
+      "source_path": "src/Article/Application/Projector/ArticleProjector.php",
+      "layer": "application_projector",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Projector/ArticleProjectorTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Projector/ArticleProjectorDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Dto\\ArticleDtoInterface": {
+      "source_path": "src/Article/Application/Dto/ArticleDtoInterface.php",
+      "layer": "application_dto",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Application\\Dto\\ArticleDto": {
+      "source_path": "src/Article/Application/Dto/ArticleDto.php",
+      "layer": "application_dto",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Dto/ArticleDtoTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Dto/ArticleDtoDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Query\\FetchOneArticleQuery": {
+      "source_path": "src/Article/Application/Query/FetchOneArticleQuery.php",
+      "layer": "application_query",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Query/FetchOneArticleQueryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Query/FetchOneArticleQueryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Query\\FindByCriteriaArticleQuery": {
+      "source_path": "src/Article/Application/Query/FindByCriteriaArticleQuery.php",
+      "layer": "application_query",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Query/FindByCriteriaArticleQueryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Query/FindByCriteriaArticleQueryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Query\\FindOneByArticleQuery": {
+      "source_path": "src/Article/Application/Query/FindOneByArticleQuery.php",
+      "layer": "application_query",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Query/FindOneByArticleQueryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Query/FindOneByArticleQueryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Processor\\JobProgramProcessor": {
+      "source_path": "src/Article/Application/Processor/JobProgramProcessor.php",
+      "layer": "application_processor",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Processor/JobProgramProcessorTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Processor/JobProgramProcessorDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Processor\\QueueEventProcessor": {
+      "source_path": "src/Article/Application/Processor/QueueEventProcessor.php",
+      "layer": "application_processor",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Processor/QueueEventProcessorTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Processor/QueueEventProcessorDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Factory\\DtoFactoryInterface": {
+      "source_path": "src/Article/Application/Factory/DtoFactoryInterface.php",
+      "layer": "application_factory",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Application\\Factory\\DtoFactory": {
+      "source_path": "src/Article/Application/Factory/DtoFactory.php",
+      "layer": "application_factory",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Factory/DtoFactoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Factory/DtoFactoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Factory\\CommandFactory": {
+      "source_path": "src/Article/Application/Factory/CommandFactory.php",
+      "layer": "application_factory",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Factory/CommandFactoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Factory/CommandFactoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Factory\\QueryFactory": {
+      "source_path": "src/Article/Application/Factory/QueryFactory.php",
+      "layer": "application_factory",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Factory/QueryFactoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Factory/QueryFactoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Factory\\CommandFactoryInterface": {
+      "source_path": "src/Article/Application/Factory/CommandFactoryInterface.php",
+      "layer": "application_factory",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Application\\Factory\\QueryFactoryInterface": {
+      "source_path": "src/Article/Application/Factory/QueryFactoryInterface.php",
+      "layer": "application_factory",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Application\\Command\\ArticleCreateCommand": {
+      "source_path": "src/Article/Application/Command/ArticleCreateCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/ArticleCreateCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/ArticleCreateCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\ArticleDeleteCommand": {
+      "source_path": "src/Article/Application/Command/ArticleDeleteCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/ArticleDeleteCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/ArticleDeleteCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\Task\\ArticleDeleteTaskCommand": {
+      "source_path": "src/Article/Application/Command/Task/ArticleDeleteTaskCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/Task/ArticleDeleteTaskCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/Task/ArticleDeleteTaskCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\Task\\ArticleUpdateTaskCommand": {
+      "source_path": "src/Article/Application/Command/Task/ArticleUpdateTaskCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/Task/ArticleUpdateTaskCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/Task/ArticleUpdateTaskCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\Task\\ArticlePublishTaskCommand": {
+      "source_path": "src/Article/Application/Command/Task/ArticlePublishTaskCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/Task/ArticlePublishTaskCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/Task/ArticlePublishTaskCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\Task\\ArticleArchiveTaskCommand": {
+      "source_path": "src/Article/Application/Command/Task/ArticleArchiveTaskCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/Task/ArticleArchiveTaskCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/Task/ArticleArchiveTaskCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\Task\\ArticleCreateTaskCommand": {
+      "source_path": "src/Article/Application/Command/Task/ArticleCreateTaskCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/Task/ArticleCreateTaskCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/Task/ArticleCreateTaskCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\Task\\ArticleUnpublishTaskCommand": {
+      "source_path": "src/Article/Application/Command/Task/ArticleUnpublishTaskCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/Task/ArticleUnpublishTaskCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/Task/ArticleUnpublishTaskCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\ArticleUpdateCommand": {
+      "source_path": "src/Article/Application/Command/ArticleUpdateCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/ArticleUpdateCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/ArticleUpdateCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\ArticleUnpublishCommand": {
+      "source_path": "src/Article/Application/Command/ArticleUnpublishCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/ArticleUnpublishCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/ArticleUnpublishCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\ArticleArchiveCommand": {
+      "source_path": "src/Article/Application/Command/ArticleArchiveCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/ArticleArchiveCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/ArticleArchiveCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\Command\\ArticlePublishCommand": {
+      "source_path": "src/Article/Application/Command/ArticlePublishCommand.php",
+      "layer": "application_command",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/Command/ArticlePublishCommandTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/Command/ArticlePublishCommandDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\QueryHandler\\FindOneByArticleHandler": {
+      "source_path": "src/Article/Application/QueryHandler/FindOneByArticleHandler.php",
+      "layer": "application_queryhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/QueryHandler/FindOneByArticleHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/QueryHandler/FindOneByArticleHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\QueryHandler\\FindByCriteriaArticleHandler": {
+      "source_path": "src/Article/Application/QueryHandler/FindByCriteriaArticleHandler.php",
+      "layer": "application_queryhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/QueryHandler/FindByCriteriaArticleHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/QueryHandler/FindByCriteriaArticleHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Application\\QueryHandler\\FetchOneArticleHandler": {
+      "source_path": "src/Article/Application/QueryHandler/FetchOneArticleHandler.php",
+      "layer": "application_queryhandler",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Application/QueryHandler/FetchOneArticleHandlerTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Application/QueryHandler/FetchOneArticleHandlerDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Event\\ArticleUpdatedEvent": {
+      "source_path": "src/Article/Domain/Event/ArticleUpdatedEvent.php",
+      "layer": "domain_event",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Event/ArticleUpdatedEventTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Event/ArticleUpdatedEventDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Event\\ArticleCreatedEvent": {
+      "source_path": "src/Article/Domain/Event/ArticleCreatedEvent.php",
+      "layer": "domain_event",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Event/ArticleCreatedEventTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Event/ArticleCreatedEventDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Event\\ArticleArchivedEvent": {
+      "source_path": "src/Article/Domain/Event/ArticleArchivedEvent.php",
+      "layer": "domain_event",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Event/ArticleArchivedEventTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Event/ArticleArchivedEventDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Event\\ArticlePublishedEvent": {
+      "source_path": "src/Article/Domain/Event/ArticlePublishedEvent.php",
+      "layer": "domain_event",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Event/ArticlePublishedEventTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Event/ArticlePublishedEventDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Event\\ArticleDeletedEvent": {
+      "source_path": "src/Article/Domain/Event/ArticleDeletedEvent.php",
+      "layer": "domain_event",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Event/ArticleDeletedEventTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Event/ArticleDeletedEventDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Event\\ArticleUnpublishedEvent": {
+      "source_path": "src/Article/Domain/Event/ArticleUnpublishedEvent.php",
+      "layer": "domain_event",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Event/ArticleUnpublishedEventTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Event/ArticleUnpublishedEventDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Service\\SlugUniquenessCheckerInterface": {
+      "source_path": "src/Article/Domain/Service/SlugUniquenessCheckerInterface.php",
+      "layer": "domain_service",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\Service\\ArticleSlugGeneratorService": {
+      "source_path": "src/Article/Domain/Service/ArticleSlugGeneratorService.php",
+      "layer": "domain_service",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Service/ArticleSlugGeneratorServiceTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Service/ArticleSlugGeneratorServiceDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Service\\ArticleSlugGeneratorServiceInterface": {
+      "source_path": "src/Article/Domain/Service/ArticleSlugGeneratorServiceInterface.php",
+      "layer": "domain_service",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\Entity\\ArticleEntity": {
+      "source_path": "src/Article/Domain/Entity/ArticleEntity.php",
+      "layer": "domain_entity",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Entity/ArticleEntityTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Entity/ArticleEntityDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Entity\\ArticleEntityInterface": {
+      "source_path": "src/Article/Domain/Entity/ArticleEntityInterface.php",
+      "layer": "domain_entity",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Status": {
+      "source_path": "src/Article/Domain/ValueObject/Status.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/StatusTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/StatusDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\PublishedAt": {
+      "source_path": "src/Article/Domain/ValueObject/PublishedAt.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/PublishedAtTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/PublishedAtDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Deleted": {
+      "source_path": "src/Article/Domain/ValueObject/Deleted.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/DeletedTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/DeletedDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Article": {
+      "source_path": "src/Article/Domain/ValueObject/Article.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/ArticleTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/ArticleDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\CategoryId": {
+      "source_path": "src/Article/Domain/ValueObject/CategoryId.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/CategoryIdTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/CategoryIdDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\CreatedAt": {
+      "source_path": "src/Article/Domain/ValueObject/CreatedAt.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/CreatedAtTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/CreatedAtDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Title": {
+      "source_path": "src/Article/Domain/ValueObject/Title.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/TitleTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/TitleDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Slug": {
+      "source_path": "src/Article/Domain/ValueObject/Slug.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/SlugTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/SlugDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Body": {
+      "source_path": "src/Article/Domain/ValueObject/Body.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/BodyTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/BodyDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\AuthorId": {
+      "source_path": "src/Article/Domain/ValueObject/AuthorId.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/AuthorIdTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/AuthorIdDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\UpdatedAt": {
+      "source_path": "src/Article/Domain/ValueObject/UpdatedAt.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/UpdatedAtTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/UpdatedAtDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Uuid": {
+      "source_path": "src/Article/Domain/ValueObject/Uuid.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/UuidTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/UuidDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\ProcessUuid": {
+      "source_path": "src/Article/Domain/ValueObject/ProcessUuid.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/ProcessUuidTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/ProcessUuidDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\ArchivedAt": {
+      "source_path": "src/Article/Domain/ValueObject/ArchivedAt.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/ArchivedAtTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/ArchivedAtDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Description": {
+      "source_path": "src/Article/Domain/ValueObject/Description.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/DescriptionTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/DescriptionDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\FindCriteria": {
+      "source_path": "src/Article/Domain/ValueObject/FindCriteria.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/FindCriteriaTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/FindCriteriaDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Active": {
+      "source_path": "src/Article/Domain/ValueObject/Active.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/ActiveTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/ActiveDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\Id": {
+      "source_path": "src/Article/Domain/ValueObject/Id.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/IdTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/IdDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\ShortDescription": {
+      "source_path": "src/Article/Domain/ValueObject/ShortDescription.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/ShortDescriptionTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/ShortDescriptionDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\ValueObject\\EventId": {
+      "source_path": "src/Article/Domain/ValueObject/EventId.php",
+      "layer": "domain_valueobject",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ValueObject/EventIdTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ValueObject/EventIdDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Factory\\ReadModelFactory": {
+      "source_path": "src/Article/Domain/Factory/ReadModelFactory.php",
+      "layer": "domain_factory",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Factory/ReadModelFactoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Factory/ReadModelFactoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Factory\\EventFactoryInterface": {
+      "source_path": "src/Article/Domain/Factory/EventFactoryInterface.php",
+      "layer": "domain_factory",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\Factory\\EventFactory": {
+      "source_path": "src/Article/Domain/Factory/EventFactory.php",
+      "layer": "domain_factory",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Factory/EventFactoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Factory/EventFactoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Factory\\EntityFactory": {
+      "source_path": "src/Article/Domain/Factory/EntityFactory.php",
+      "layer": "domain_factory",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Factory/EntityFactoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Factory/EntityFactoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Factory\\ValueObjectFactory": {
+      "source_path": "src/Article/Domain/Factory/ValueObjectFactory.php",
+      "layer": "domain_factory",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/Factory/ValueObjectFactoryTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/Factory/ValueObjectFactoryDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Domain\\Factory\\EntityFactoryInterface": {
+      "source_path": "src/Article/Domain/Factory/EntityFactoryInterface.php",
+      "layer": "domain_factory",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\Factory\\ValueObjectFactoryInterface": {
+      "source_path": "src/Article/Domain/Factory/ValueObjectFactoryInterface.php",
+      "layer": "domain_factory",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\Factory\\ReadModelFactoryInterface": {
+      "source_path": "src/Article/Domain/Factory/ReadModelFactoryInterface.php",
+      "layer": "domain_factory",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\Repository\\TaskRepositoryInterface": {
+      "source_path": "src/Article/Domain/Repository/TaskRepositoryInterface.php",
+      "layer": "domain_repository",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\Repository\\EntityStore\\ArticleRepositoryInterface": {
+      "source_path": "src/Article/Domain/Repository/EntityStore/ArticleRepositoryInterface.php",
+      "layer": "domain_repository",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\Repository\\Query\\ArticleRepositoryInterface": {
+      "source_path": "src/Article/Domain/Repository/Query/ArticleRepositoryInterface.php",
+      "layer": "domain_repository",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\Repository\\ReadModel\\ArticleRepositoryInterface": {
+      "source_path": "src/Article/Domain/Repository/ReadModel/ArticleRepositoryInterface.php",
+      "layer": "domain_repository",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\ReadModel\\ArticleReadModelInterface": {
+      "source_path": "src/Article/Domain/ReadModel/ArticleReadModelInterface.php",
+      "layer": "domain_readmodel",
+      "status": "skipped",
+      "test_path": null,
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": false,
+      "last_updated": "2025-12-27T12:00:00+00:00",
+      "errors": [],
+      "skip_reason": "interface - no unit test needed"
+    },
+    "Micro\\Article\\Domain\\ReadModel\\ArticleReadModel": {
+      "source_path": "src/Article/Domain/ReadModel/ArticleReadModel.php",
+      "layer": "domain_readmodel",
+      "status": "done",
+      "test_path": "tests/Unit/Article/Domain/ReadModel/ArticleReadModelTest.php",
+      "dataProvider_path": "tests/Unit/DataProvider/Article/Domain/ReadModel/ArticleReadModelDataProvider.php",
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-29T11:50:49+00:00",
+      "errors": [],
+      "test_type": "unit",
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_execution": "passed"
+      }
+    },
+    "Micro\\Article\\Presentation\\Rest\\V2\\ArticleCommandsController": {
+      "source_path": "src/Article/Presentation/Rest/V2/ArticleCommandsController.php",
+      "layer": "presentation_controller",
+      "status": "done",
+      "test_path": "tests/Functional/Article/Presentation/Rest/V2/ArticleCommandsControllerTest.php",
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-27T16:00:00+00:00",
+      "errors": [],
+      "notes": "Functional test - tests V2 REST API command endpoints",
+      "test_type": "functional",
+      "test_count": 12,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_list": "passed",
+        "review_score": 95
+      }
+    },
+    "Micro\\Article\\Presentation\\Rest\\V2\\ArticleQueriesController": {
+      "source_path": "src/Article/Presentation/Rest/V2/ArticleQueriesController.php",
+      "layer": "presentation_controller",
+      "status": "done",
+      "test_path": "tests/Functional/Article/Presentation/Rest/V2/ArticleQueriesControllerTest.php",
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-27T16:00:00+00:00",
+      "errors": [],
+      "notes": "Functional test - tests V2 REST API query endpoints",
+      "test_type": "functional",
+      "test_count": 13,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_list": "passed",
+        "review_score": 95
+      }
+    },
+    "Micro\\Article\\Presentation\\Rest\\V1\\ArticleCommandsController": {
+      "source_path": "src/Article/Presentation/Rest/V1/ArticleCommandsController.php",
+      "layer": "presentation_controller",
+      "status": "done",
+      "test_path": "tests/Functional/Article/Presentation/Rest/V1/ArticleCommandsControllerTest.php",
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-27T16:00:00+00:00",
+      "errors": [],
+      "notes": "Functional test - tests V1 REST API command endpoints",
+      "test_type": "functional",
+      "test_count": 14,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_list": "passed",
+        "review_score": 95
+      }
+    },
+    "Micro\\Article\\Presentation\\Rest\\V1\\ArticleQueriesController": {
+      "source_path": "src/Article/Presentation/Rest/V1/ArticleQueriesController.php",
+      "layer": "presentation_controller",
+      "status": "done",
+      "test_path": "tests/Functional/Article/Presentation/Rest/V1/ArticleQueriesControllerTest.php",
+      "dataProvider_path": null,
+      "mock_traits": [],
+      "scenarios_analyzed": true,
+      "last_updated": "2025-12-27T16:00:00+00:00",
+      "errors": [],
+      "notes": "Functional test - tests V1 REST API query endpoints with routing caveats",
+      "test_type": "functional",
+      "test_count": 13,
+      "validation": {
+        "syntax_check": "passed",
+        "phpunit_list": "passed",
+        "review_score": 95
+      }
+    }
+  }
+}

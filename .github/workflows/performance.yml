@@ -1,0 +1,572 @@
+name: Performance Testing
+
+# =============================================================================
+# Performance Testing CI/CD Workflow
+# =============================================================================
+# Implements ADR-012: Performance Testing Strategy
+#
+# Triggers:
+#   - push to main: Load test with baseline comparison
+#   - pull_request: Quick smoke test (optional, comment to disable)
+#   - workflow_dispatch: Manual full test suite
+#   - schedule: Weekly runtime comparison
+#
+# @see docs/testing/PERFORMANCE-TESTING.md
+# @see docs/adr/ADR-012-performance-testing-strategy.md
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'config/**'
+      - 'scripts/perf/**'
+      - '.github/workflows/performance.yml'
+
+  # Uncomment to enable PR smoke tests (adds ~2 min to PR checks)
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - 'src/**'
+  #     - 'config/**'
+
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Test type to run'
+        required: true
+        default: 'load'
+        type: choice
+        options:
+          - smoke
+          - load
+          - stress
+          - soak
+          - comparison
+      runtime:
+        description: 'Runtime to test (for comparison: all)'
+        required: false
+        default: 'rr'
+        type: choice
+        options:
+          - rr
+          - fpm
+          - frank
+          - all
+      baseline_action:
+        description: 'Baseline action (compare, save, none)'
+        required: false
+        default: 'compare'
+        type: choice
+        options:
+          - compare
+          - save
+          - none
+
+  schedule:
+    # Weekly runtime comparison: Sunday 2:00 AM UTC
+    - cron: '0 2 * * 0'
+
+env:
+  # Default runtime configuration
+  DEFAULT_RUNTIME: rr
+  RESULTS_DIR: tests/performance/results
+  BASELINES_DIR: tests/performance/baselines
+
+jobs:
+  # ===========================================================================
+  # Job: Smoke Test (Quick validation for PRs)
+  # ===========================================================================
+  smoke-test:
+    name: Smoke Test (30s)
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'smoke')
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_pgsql, redis, amqp
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress --no-dev
+
+      - name: Start application (RoadRunner)
+        run: |
+          # Start RoadRunner in background
+          ./vendor/bin/rr serve -c .rr.yaml &
+          sleep 5
+
+          # Wait for app to be ready
+          timeout 60 bash -c 'until curl -sf http://localhost:8080/health; do sleep 2; done'
+          echo "Application is ready"
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run smoke test
+        run: |
+          mkdir -p ${{ env.RESULTS_DIR }}
+          k6 run --out json=${{ env.RESULTS_DIR }}/smoke-results.json scripts/perf/k6-smoke-test.js
+        env:
+          TARGET_URL: http://localhost:8080
+
+      - name: Upload smoke test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-results
+          path: ${{ env.RESULTS_DIR }}/*
+          retention-days: 7
+
+      - name: Add smoke test summary
+        if: always()
+        run: |
+          echo "## Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "${{ env.RESULTS_DIR }}/smoke-summary.json" ]; then
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            jq -r '"| Requests | \(.metrics.requests_total) |"' ${{ env.RESULTS_DIR }}/smoke-summary.json >> $GITHUB_STEP_SUMMARY
+            jq -r '"| Failed Rate | \(.metrics.requests_failed * 100 | floor)% |"' ${{ env.RESULTS_DIR }}/smoke-summary.json >> $GITHUB_STEP_SUMMARY
+            jq -r '"| P95 Latency | \(.metrics.duration_p95 | floor)ms |"' ${{ env.RESULTS_DIR }}/smoke-summary.json >> $GITHUB_STEP_SUMMARY
+            jq -r '"| Thresholds | \(if .thresholds_passed then \"PASSED\" else \"FAILED\" end) |"' ${{ env.RESULTS_DIR }}/smoke-summary.json >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No summary file found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ===========================================================================
+  # Job: Load Test (5-minute standard test)
+  # ===========================================================================
+  load-test:
+    name: Load Test (5min)
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'load')
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_pgsql, redis, amqp
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress --no-dev
+
+      - name: Start application (RoadRunner)
+        run: |
+          ./vendor/bin/rr serve -c .rr.yaml &
+          sleep 5
+          timeout 60 bash -c 'until curl -sf http://localhost:8080/health; do sleep 2; done'
+          echo "Application is ready"
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Install wrk and dependencies
+        run: |
+          sudo apt-get install -y wrk jq bc
+
+      - name: Run load test
+        run: |
+          mkdir -p ${{ env.RESULTS_DIR }}
+          k6 run --out json=${{ env.RESULTS_DIR }}/load-results.json scripts/perf/k6-load-test.js
+        env:
+          TARGET_URL: http://localhost:8080
+
+      - name: Generate baseline-compatible results
+        run: |
+          # Run wrk to generate baseline-compatible results
+          ./scripts/perf/wrk-baseline.sh --json > ${{ env.RESULTS_DIR }}/wrk-output.json || true
+        env:
+          TARGET_URL: http://localhost:8080
+
+      - name: Compare against baseline
+        id: baseline-compare
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.baseline_action == 'compare')
+        run: |
+          if [ -f "${{ env.BASELINES_DIR }}/rr-baseline.json" ]; then
+            ./scripts/perf/perf-baseline.sh compare rr --ci || echo "regression_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "No baseline found for RoadRunner, skipping comparison"
+            echo "regression_detected=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Save new baseline (manual only)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.baseline_action == 'save'
+        run: |
+          ./scripts/perf/perf-baseline.sh save rr --force
+          echo "New baseline saved for RoadRunner"
+
+      - name: Upload load test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-results
+          path: ${{ env.RESULTS_DIR }}/*
+          retention-days: 30
+
+      - name: Add load test summary
+        if: always()
+        run: |
+          echo "## Load Test Results (RoadRunner)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- Duration: 5 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "- Peak VUs: 100" >> $GITHUB_STEP_SUMMARY
+          echo "- Stages: 0→50→100 VUs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "${{ env.RESULTS_DIR }}/load-results.json" ]; then
+            echo "### Metrics" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            jq -r '.metrics | to_entries[] | select(.key | startswith("http_req")) | "\(.key): \(.value.values | to_entries | map("\(.key)=\(.value | if type == "number" then (. | floor) else . end)") | join(", "))"' ${{ env.RESULTS_DIR }}/load-results.json 2>/dev/null | head -5 >> $GITHUB_STEP_SUMMARY || echo "Unable to parse metrics" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ steps.baseline-compare.outputs.regression_detected }}" == "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Regression Detected" >> $GITHUB_STEP_SUMMARY
+            echo "Performance regression detected compared to baseline. Review the detailed comparison in artifacts." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ===========================================================================
+  # Job: Runtime Comparison (All runtimes)
+  # ===========================================================================
+  runtime-comparison:
+    name: Runtime Comparison
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'comparison')
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [fpm, rr, frank]
+        include:
+          - runtime: fpm
+            name: PHP-FPM
+            port: 80
+            compose_profile: ""
+          - runtime: rr
+            name: RoadRunner
+            port: 8080
+            compose_profile: ""
+          - runtime: frank
+            name: FrankenPHP
+            port: 8081
+            compose_profile: "frankenphp"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start services with Docker Compose
+        run: |
+          if [ -n "${{ matrix.compose_profile }}" ]; then
+            docker compose --profile ${{ matrix.compose_profile }} up -d
+          else
+            docker compose up -d
+          fi
+
+          # Wait for services to be ready
+          echo "Waiting for ${{ matrix.name }} to be ready..."
+          timeout 120 bash -c 'until curl -sf http://localhost:${{ matrix.port }}/health; do sleep 3; done'
+          echo "${{ matrix.name }} is ready on port ${{ matrix.port }}"
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6 wrk jq bc
+
+      - name: Run load test for ${{ matrix.name }}
+        run: |
+          mkdir -p ${{ env.RESULTS_DIR }}
+          k6 run --out json=${{ env.RESULTS_DIR }}/${{ matrix.runtime }}-load-results.json scripts/perf/k6-load-test.js
+        env:
+          TARGET_URL: http://localhost:${{ matrix.port }}
+
+      - name: Generate baseline results
+        run: |
+          ./scripts/perf/wrk-baseline.sh --json
+        env:
+          TARGET_URL: http://localhost:${{ matrix.port }}
+
+      - name: Compare against baseline
+        run: |
+          if [ -f "${{ env.BASELINES_DIR }}/${{ matrix.runtime }}-baseline.json" ]; then
+            ./scripts/perf/perf-baseline.sh compare ${{ matrix.runtime }} || true
+          else
+            echo "No baseline found for ${{ matrix.name }}"
+          fi
+        continue-on-error: true
+
+      - name: Upload ${{ matrix.name }} results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.runtime }}-test-results
+          path: ${{ env.RESULTS_DIR }}/*
+          retention-days: 30
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
+
+  # ===========================================================================
+  # Job: Generate Comparison Report
+  # ===========================================================================
+  comparison-report:
+    name: Generate Comparison Report
+    runs-on: ubuntu-latest
+    needs: runtime-comparison
+    if: |
+      always() &&
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'comparison'))
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all runtime results
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ env.RESULTS_DIR }}
+          pattern: '*-test-results'
+          merge-multiple: true
+
+      - name: Generate comparison summary
+        run: |
+          echo "## Runtime Comparison Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Generated: $(date -Iseconds)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Runtime | Requests/sec | P95 Latency | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------------|-------------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          for runtime in fpm rr frank; do
+            result_file="${{ env.RESULTS_DIR }}/${runtime}-load-results.json"
+            if [ -f "$result_file" ]; then
+              req_sec=$(jq -r '.metrics.http_reqs.values.rate // "N/A"' "$result_file" 2>/dev/null | xargs printf "%.0f" 2>/dev/null || echo "N/A")
+              p95=$(jq -r '.metrics.http_req_duration.values["p(95)"] // "N/A"' "$result_file" 2>/dev/null | xargs printf "%.0f" 2>/dev/null || echo "N/A")
+
+              case $runtime in
+                fpm) name="PHP-FPM" ;;
+                rr) name="RoadRunner" ;;
+                frank) name="FrankenPHP" ;;
+              esac
+
+              echo "| $name | ${req_sec}/s | ${p95}ms | Completed |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| $runtime | N/A | N/A | No data |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Detailed results available in workflow artifacts." >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Job: Stress/Soak Tests (Manual only)
+  # ===========================================================================
+  extended-test:
+    name: Extended Test (${{ github.event.inputs.test_type }})
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.test_type == 'stress' || github.event.inputs.test_type == 'soak')
+    timeout-minutes: 60
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_pgsql, redis, amqp
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress --no-dev
+
+      - name: Determine runtime and port
+        id: runtime
+        run: |
+          runtime="${{ github.event.inputs.runtime }}"
+          case $runtime in
+            fpm) port=80 ;;
+            rr) port=8080 ;;
+            frank) port=8081 ;;
+            *) port=8080; runtime="rr" ;;
+          esac
+          echo "runtime=$runtime" >> $GITHUB_OUTPUT
+          echo "port=$port" >> $GITHUB_OUTPUT
+
+      - name: Start application
+        run: |
+          ./vendor/bin/rr serve -c .rr.yaml &
+          sleep 5
+          timeout 60 bash -c 'until curl -sf http://localhost:${{ steps.runtime.outputs.port }}/health; do sleep 2; done'
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run ${{ github.event.inputs.test_type }} test
+        run: |
+          mkdir -p ${{ env.RESULTS_DIR }}
+          test_script="scripts/perf/k6-${{ github.event.inputs.test_type }}-test.js"
+          k6 run --out json=${{ env.RESULTS_DIR }}/${{ github.event.inputs.test_type }}-results.json "$test_script"
+        env:
+          TARGET_URL: http://localhost:${{ steps.runtime.outputs.port }}
+
+      - name: Upload extended test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ github.event.inputs.test_type }}-test-results
+          path: ${{ env.RESULTS_DIR }}/*
+          retention-days: 30
+
+      - name: Add test summary
+        if: always()
+        run: |
+          echo "## ${{ github.event.inputs.test_type }} Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Runtime: ${{ steps.runtime.outputs.runtime }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Port: ${{ steps.runtime.outputs.port }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Detailed results available in workflow artifacts." >> $GITHUB_STEP_SUMMARY

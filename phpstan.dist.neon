@@ -1,0 +1,51 @@
+parameters:
+    # PHP 8.4 target version
+    phpVersion: 80400
+
+    # Analysis level (6 = strict, considers all types)
+    level: 6
+
+    # Paths to analyze
+    paths:
+        - bin/
+        - config/
+        - public/
+        - src/
+        - tests/
+
+    # Paths to exclude from analysis
+    excludePaths:
+        - src/Common/Infrastructure/Migrations/
+        - var/
+        - vendor/
+        - bootstrap/
+        - tests/bootstrap.php
+        - public/index.php
+
+    # Symfony integration
+    symfony:
+        containerXmlPath: var/cache/dev/Micro_KernelDevDebugContainer.xml
+        consoleApplicationLoader: null
+
+    # Doctrine integration
+    doctrine:
+        objectManagerLoader: null
+        allowNullablePropertyForRequiredField: false
+        reportDynamicQueryBuilders: true
+
+    # Type safety settings
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: true
+
+    # Parallel processing
+    parallel:
+        maximumNumberOfProcesses: 16
+        processTimeout: 300.0
+
+    # Ignored errors (baseline will be separate)
+    ignoreErrors: []
+
+# Note: phpstan-strict-rules is auto-loaded by phpstan/extension-installer
+# Include baseline for gradual error fixing
+includes:
+    - phpstan-baseline.neon

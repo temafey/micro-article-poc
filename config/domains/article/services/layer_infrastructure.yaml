@@ -1,0 +1,51 @@
+services:
+  _defaults:
+    public: true
+
+  # Slugify library for slug generation
+  Cocur\Slugify\Slugify:
+    class: Cocur\Slugify\Slugify
+    arguments:
+      - lowercase: true
+        separator: '-'
+        trim: true
+
+  Cocur\Slugify\SlugifyInterface:
+    alias: Cocur\Slugify\Slugify
+
+  # Slug uniqueness checker
+  article.infrastructure.service.slug_uniqueness_checker:
+    class: Micro\Article\Infrastructure\Service\SlugUniquenessChecker
+    arguments:
+      - '@Micro\Article\Domain\Repository\Query\ArticleRepositoryInterface'
+
+  Micro\Article\Domain\Service\SlugUniquenessCheckerInterface:
+    alias: article.infrastructure.service.slug_uniqueness_checker
+
+  # Query repository for Article
+  Micro\Article\Domain\Repository\Query\ArticleRepositoryInterface:
+    class: Micro\Article\Infrastructure\Repository\Query\ArticleRepository
+    arguments:
+      - '@article.infrastructure.repository.storage.read_model.dbal.article'
+      - '@Micro\Article\Domain\Factory\ReadModelFactoryInterface'
+      - '@Micro\Article\Domain\Factory\ValueObjectFactoryInterface'
+
+  article.infrastructure.repository.task:
+    class: Micro\Article\Infrastructure\Repository\TaskRepository
+    arguments:
+      - '@enqueue.client.task.producer'
+
+  # Entity repositories
+  article.infrastructure.repository.storage.read_model.dbal.article:
+    class: Micro\Article\Infrastructure\Repository\Storage\DBALReadModelStore
+    arguments:
+      - '@doctrine.dbal.default_connection'
+      - 'article'
+      - 'uuid'
+      - '@common.infrastructure.service.data_mapper.dbal'
+
+  article.infrastructure.repository.query.lite.article:
+    class: MicroModule\Base\Infrastructure\Repository\QueryLiteRepository
+    arguments:
+      - '@article.infrastructure.repository.storage.read_model.dbal.article'
+

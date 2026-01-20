@@ -1,0 +1,24 @@
+# Monolog Configuration
+#
+# Handlers are processed in order. OTEL handler captures logs first,
+# then bubbles to console for local output.
+#
+# Part of TASK-035: OpenTelemetry Integration
+
+monolog:
+    handlers:
+        # OpenTelemetry Handler - exports logs via OTLP to Loki
+        otel:
+            type: service
+            id: otel.monolog.handler
+            channels: [ "!event", "!doctrine" ]
+
+        # Console Handler - local output for development
+        console:
+            type: console
+            process_psr_3_messages: false
+            formatter: 'monolog.formatter.line'
+            channels: [ "!event", "!doctrine" ]
+            level: notice
+            verbosity_levels:
+                VERBOSITY_NORMAL: NOTICE

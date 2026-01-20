@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- https://phpunit.readthedocs.io/en/latest/configuration.html -->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         backupGlobals="false"
+         colors="true"
+         failOnNotice="true"
+         failOnWarning="true"
+         bootstrap="tests/bootstrap.php"
+         cacheDirectory=".phpunit.cache"
+>
+    <php>
+        <ini name="display_errors" value="1" />
+        <ini name="error_reporting" value="-1" />
+        <server name="APP_ENV" value="test" force="true" />
+        <server name="SHELL_VERBOSITY" value="-1" />
+
+        <!-- ###+ symfony/framework-bundle ### -->
+        <env name="APP_ENV" value="test"/>
+        <env name="APP_SECRET" value="test_secret_key_for_functional_tests"/>
+        <env name="KERNEL_CLASS" value="Micro\Kernel"/>
+        <!-- ###- symfony/framework-bundle ### -->
+
+        <!-- ###+ doctrine/doctrine-bundle ### -->
+        <!-- Database connection uses individual APP_DATABASE_* variables (not DATABASE_URL) -->
+        <!-- See config/packages/doctrine.yaml for connection configuration -->
+        <env name="APP_DATABASE_HOST" value="test-micro-article-system-database"/>
+        <env name="APP_DATABASE_PORT" value="5432"/>
+        <env name="APP_DATABASE_NAME" value="micro-article-system"/>
+        <!-- Root user for migrations (full DDL privileges) -->
+        <env name="APP_DATABASE_ROOT_LOGIN" value="postgres"/>
+        <env name="APP_DATABASE_ROOT_PASSWORD" value="postgres"/>
+        <!-- Service user for application runtime (restricted DML only) -->
+        <env name="APP_DATABASE_SERVICE_LOGIN" value="article_service"/>
+        <env name="APP_DATABASE_SERVICE_PASSWORD" value="article_service_secure_pwd_2024"/>
+        <!-- ###- doctrine/doctrine-bundle ### -->
+
+        <!-- ###+ nelmio/cors-bundle ### -->
+        <env name="CORS_ALLOW_ORIGIN" value="'^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'"/>
+        <!-- ###- nelmio/cors-bundle ### -->
+    </php>
+
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+        <testsuite name="Functional">
+            <directory>tests/Functional</directory>
+        </testsuite>
+        <testsuite name="Api">
+            <directory>tests/Api</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+
+    <source ignoreSuppressionOfDeprecations="true" restrictNotices="true" restrictWarnings="true">
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+
+    <extensions>
+        <bootstrap class="Symfony\Bridge\PhpUnit\SymfonyExtension">
+            <parameter name="clock-mock-namespaces" value="Micro" />
+            <parameter name="dns-mock-namespaces" value="Micro" />
+        </bootstrap>
+    </extensions>
+</phpunit>

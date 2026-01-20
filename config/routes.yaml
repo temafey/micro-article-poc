@@ -1,0 +1,32 @@
+NelmioApiDocBundle:
+  resource: "@NelmioApiDocBundle/config/routing/swaggerui.xml"
+  prefix:   /api/doc
+
+#app.swagger_ui:
+#  path: /api/doc
+#  methods: GET
+#  defaults: { _controller: nelmio_api_doc.controller.swagger_ui }
+#
+#app.redocly:
+#  path: /api/docs
+#  methods: GET
+#  defaults: { _controller: nelmio_api_doc.controller.redocly }
+#
+#app.swagger:
+#  path: /api/doc.json
+#  methods: GET
+#  defaults: { _controller: nelmio_api_doc.controller.swagger }
+#
+#app.swagger_yaml:
+#  path: /api/doc.yaml
+#  methods: GET
+#  defaults: { _controller: nelmio_api_doc.controller.swagger_yaml }
+
+api_docs:
+  resource: "./routes/nelmio_api_doc.yaml"
+
+api_routes:
+  resource: "./routes/api_versioning.yaml"
+
+framework_routes:
+  resource: "./routes/framework.yaml"

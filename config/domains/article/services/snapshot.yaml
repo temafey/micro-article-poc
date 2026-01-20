@@ -1,0 +1,8 @@
+services:
+
+  micro_module.snapshotting.snapshot.article.article.repository:
+    class: MicroModule\Snapshotting\Snapshot\SnapshotRepository
+    arguments:
+      - '@micro_module.snapshotting.snapshot.storage'
+      - 'Micro\Article\Domain\Entity\articleEntity'
+      - '@micro_module.snapshotting.event_sourcing.aggregate.factory'

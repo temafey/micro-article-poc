@@ -1,0 +1,17 @@
+parameters:
+  # Domain-specific parameters
+  domain.name: '%env(DOMAIN_NAME)%'
+  domain.version: '%env(DOMAIN_VERSION)%'
+
+  # Service configuration
+  service.timeout: 30
+  service.retry.max: 3
+
+  # Database configuration
+  database.charset: 'utf8mb4'
+  database.collation: 'utf8mb4_unicode_ci'
+
+  # Cache configuration
+  cache.ttl.default: 3600
+  cache.ttl.short: 300
+  cache.ttl.long: 86400

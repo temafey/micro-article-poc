@@ -1,0 +1,17 @@
+# Stateless CSRF Protection Configuration (Symfony 8.0+)
+# Tokens are signed with the app secret - no server-side storage needed
+framework:
+    form:
+        csrf_protection:
+            token_id: submit
+
+    csrf_protection:
+        # Stateless tokens: cryptographically signed, no session required
+        # Perfect for REST APIs and microservices
+        stateless_token_ids:
+            - submit           # Form submissions
+            - authenticate     # Login forms
+            - logout           # Logout actions
+            - api_mutate       # API POST/PUT/PATCH/DELETE operations
+            - api_command      # CQRS command operations
+            - webhook          # Webhook callbacks

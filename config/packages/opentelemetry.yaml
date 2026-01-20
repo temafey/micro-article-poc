@@ -1,0 +1,86 @@
+# OpenTelemetry Logging Configuration
+#
+# Integrates Monolog with OpenTelemetry for distributed logging.
+# Logs are exported via OTLP to the configured collector endpoint.
+#
+# Environment variables (set in docker-compose):
+#   OTEL_PHP_AUTOLOAD_ENABLED: true
+#   OTEL_LOGS_EXPORTER: otlp
+#   OTEL_EXPORTER_OTLP_ENDPOINT: http://test-otel-lgtm:4318
+#
+# Part of TASK-035: OpenTelemetry Integration
+# Part of TASK-15: OpenTelemetry Circuit Breaker Resilience
+
+parameters:
+    # Note: Circuit breaker parameters are defined in config/parameters.yaml
+    # This file only contains OpenTelemetry-specific service configurations
+
+services:
+    # LoggerProvider factory using SDK autoloading
+    # The SDK auto-configures LoggerProvider based on OTEL_* environment variables
+    OpenTelemetry\API\Logs\LoggerProviderInterface:
+        class: OpenTelemetry\API\Logs\LoggerProviderInterface
+        factory: ['OpenTelemetry\API\Globals', 'loggerProvider']
+
+    # OpenTelemetry Monolog Handler
+    # Converts Monolog log records to OTEL LogRecords and exports via OTLP
+    otel.monolog.handler:
+        class: OpenTelemetry\Contrib\Logs\Monolog\Handler
+        public: true  # Allow direct access for testing
+        arguments:
+            - '@OpenTelemetry\API\Logs\LoggerProviderInterface'
+            - !php/const Monolog\Level::Info
+            - true  # bubble: allow other handlers to process
+
+    # =========================================================================
+    # Circuit Breaker Services (TASK-15: OpenTelemetry Circuit Breaker Resilience)
+    # =========================================================================
+
+    # Ganesha Circuit Breaker Factory
+    # Creates circuit breaker with Redis storage for cross-worker state sharing
+    # Falls back to in-memory when Redis is unavailable
+    otel.circuit_breaker.factory:
+        class: Micro\Component\Common\Infrastructure\OpenTelemetry\CircuitBreaker\GaneshaCircuitBreakerFactory
+        arguments:
+            $redisHost: '%redis.host%'
+            $redisPort: '%redis.port%'
+            $timeWindowSeconds: '%otel.circuit_breaker.time_window_seconds%'
+            $failureRateThreshold: '%otel.circuit_breaker.failure_rate_threshold%'
+            $minimumRequests: '%otel.circuit_breaker.minimum_requests%'
+            $intervalToHalfOpenSeconds: '%otel.circuit_breaker.interval_to_half_open_seconds%'
+            $logger: '@logger'
+
+    # Ganesha Circuit Breaker Instance
+    otel.circuit_breaker:
+        class: Ackintosh\Ganesha
+        factory: ['@otel.circuit_breaker.factory', 'create']
+
+    # Resilient OTEL Log Flusher with Circuit Breaker
+    # Replaces the basic OtelLogFlusher with circuit breaker protection
+    # Prevents request blocking when OTEL collector is unavailable
+    otel.log_flusher:
+        class: Micro\Component\Common\Infrastructure\OpenTelemetry\CircuitBreaker\ResilientOtelLogFlusher
+        arguments:
+            $loggerProvider: '@OpenTelemetry\API\Logs\LoggerProviderInterface'
+            $circuitBreaker: '@otel.circuit_breaker'
+            $logger: '@logger'
+            $enabled: '%otel.circuit_breaker.enabled%'
+        tags:
+            - { name: kernel.event_listener, event: kernel.terminate, method: onKernelTerminate }
+            - { name: kernel.event_listener, event: console.terminate, method: onConsoleTerminate }
+
+    # OTEL Metrics Flusher - ensures metrics are exported at request termination
+    # Critical for CLI commands which exit before the periodic exporter can flush
+    otel.metrics_flusher:
+        class: Micro\Component\Common\Infrastructure\OpenTelemetry\OtelMetricsFlusher
+        tags:
+            - { name: kernel.event_listener, event: kernel.terminate, method: onKernelTerminate }
+            - { name: kernel.event_listener, event: console.terminate, method: onConsoleTerminate }
+
+    # Legacy alias for backward compatibility
+    Micro\Component\Common\Infrastructure\OpenTelemetry\OtelLogFlusher:
+        alias: otel.log_flusher
+        deprecated:
+            package: 'test/micro-article-system'
+            version: '1.1.0'
+            message: 'The "%alias_id%" alias is deprecated. Use "otel.log_flusher" service directly or the new ResilientOtelLogFlusher class.'

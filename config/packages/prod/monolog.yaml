@@ -1,0 +1,41 @@
+# Production Monolog configuration optimized for RoadRunner
+#
+# RoadRunner captures stdout/stderr from PHP workers, so we use:
+# - stderr for errors (captured by RoadRunner's error channel)
+# - stream for main logs (persistent file logging)
+# - JSON format for structured logging (easy to parse)
+#
+monolog:
+    channels:
+        - deprecation
+
+    handlers:
+        # Main application logs - goes to stderr (RoadRunner captures this)
+        main:
+            type: stream
+            path: "php://stderr"
+            level: warning
+            formatter: json_formatter
+            channels: ["!event", "!doctrine"]
+
+        # Critical errors buffer - prevents log spam during issues
+        nested:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.log"
+            level: error
+            formatter: json_formatter
+
+        # Buffer for nested handler - groups errors
+        buffered:
+            type: buffer
+            handler: nested
+            buffer_size: 50
+            level: error
+
+        # Deprecation warnings - separate channel for monitoring
+        deprecation:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.deprecations.log"
+            level: notice
+            formatter: json_formatter
+            channels: ["deprecation"]

@@ -1,0 +1,22 @@
+services:
+  _defaults:
+    public: true
+
+  # Event Store - Override DBAL to use in-memory for tests
+  # This makes #[Autowire(service: DBALEventStore::class)] use in-memory
+  Broadway\EventStore\Dbal\DBALEventStore:
+    class: Broadway\EventStore\InMemoryEventStore
+
+  # Read Model Repositories - alias DBAL stores to in-memory for tests
+  article.infrastructure.repository.storage.read_model.dbal: '@article.infrastructure.repository.storage.read_model.in_memory'
+  article.infrastructure.repository.storage.read_model.dbal.article: '@article.infrastructure.repository.storage.read_model.in_memory.article'
+
+  article.infrastructure.repository.storage.read_model.in_memory:
+    class: MicroModule\Base\Infrastructure\Repository\InMemoryReadModelStore
+    arguments:
+      - 'uuid'
+
+  article.infrastructure.repository.storage.read_model.in_memory.article:
+    class: MicroModule\Base\Infrastructure\Repository\InMemoryReadModelStore
+    arguments:
+      - 'uuid'

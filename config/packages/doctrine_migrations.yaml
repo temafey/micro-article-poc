@@ -1,0 +1,7 @@
+doctrine_migrations:
+  migrations_paths:
+    'Micro\Component\Common\Infrastructure\Migrations': '%kernel.project_dir%/src/Common/Infrastructure/Migrations'
+
+  # Use migration connection with root privileges for DDL operations
+  # This ensures migrations can CREATE, ALTER, DROP tables
+  connection: migration

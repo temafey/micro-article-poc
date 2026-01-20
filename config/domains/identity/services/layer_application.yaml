@@ -1,0 +1,133 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: false
+        public: true
+
+    ###############################
+    # JWT Application Layer - Command Handlers
+    # Uses Pure Redis Architecture (ADR-JWT-REDIS-ARCHITECTURE.md)
+    ###############################
+
+    Micro\Identity\Jwt\Application\CommandHandler\JwtTokenIssueHandler:
+        arguments:
+            - '@Micro\Identity\Jwt\Domain\Service\JwtTokenGeneratorServiceInterface'
+            - '@Micro\Identity\Jwt\Infrastructure\Repository\Redis\RedisTokenRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\Jwt\Application\Command\JwtTokenIssueCommand', bus: 'command.identity' }
+
+    Micro\Identity\Jwt\Application\CommandHandler\JwtTokenRevokeHandler:
+        arguments:
+            - '@Micro\Identity\Jwt\Domain\Service\JwtSignerInterface'
+            - '@Micro\Identity\Jwt\Infrastructure\Repository\Redis\RedisTokenRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\Jwt\Application\Command\JwtTokenRevokeCommand', bus: 'command.identity' }
+
+    Micro\Identity\Jwt\Application\CommandHandler\JwtTokenRefreshHandler:
+        arguments:
+            - '@Micro\Identity\Jwt\Domain\Service\JwtSignerInterface'
+            - '@Micro\Identity\Jwt\Domain\Service\JwtTokenGeneratorServiceInterface'
+            - '@Micro\Identity\Jwt\Infrastructure\Repository\Redis\RedisTokenRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\Jwt\Application\Command\JwtTokenRefreshCommand', bus: 'command.identity' }
+
+    Micro\Identity\Jwt\Application\CommandHandler\JwtTokenRevokeAllBySubjectHandler:
+        arguments:
+            - '@Micro\Identity\Jwt\Infrastructure\Repository\Redis\RedisTokenRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\Jwt\Application\Command\JwtTokenRevokeAllBySubjectCommand', bus: 'command.identity' }
+
+    ###############################
+    # User Application Layer - Command Handlers
+    ###############################
+
+    Micro\Identity\User\Application\CommandHandler\UserRegisterHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\EntityStore\UserRepositoryInterface'
+            - '@Micro\Identity\User\Domain\Factory\EntityFactoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Command\UserRegisterCommand', bus: 'command.identity' }
+
+    Micro\Identity\User\Application\CommandHandler\UserUpdateProfileHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\EntityStore\UserRepositoryInterface'
+            - '@Micro\Identity\User\Domain\Factory\ValueObjectFactoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Command\UserUpdateProfileCommand', bus: 'command.identity' }
+
+    Micro\Identity\User\Application\CommandHandler\UserChangePasswordHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\EntityStore\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Command\UserChangePasswordCommand', bus: 'command.identity' }
+
+    Micro\Identity\User\Application\CommandHandler\UserChangeEmailHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\EntityStore\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Command\UserChangeEmailCommand', bus: 'command.identity' }
+
+    Micro\Identity\User\Application\CommandHandler\UserVerifyEmailHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\EntityStore\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Command\UserVerifyEmailCommand', bus: 'command.identity' }
+
+    Micro\Identity\User\Application\CommandHandler\UserDeactivateHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\EntityStore\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Command\UserDeactivateCommand', bus: 'command.identity' }
+
+    Micro\Identity\User\Application\CommandHandler\UserActivateHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\EntityStore\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Command\UserActivateCommand', bus: 'command.identity' }
+
+    Micro\Identity\User\Application\CommandHandler\UserUpdateRolesHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\EntityStore\UserRepositoryInterface'
+            - '@Micro\Identity\User\Domain\Factory\ValueObjectFactoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Command\UserUpdateRolesCommand', bus: 'command.identity' }
+
+    ###############################
+    # User Application Layer - Query Handlers
+    ###############################
+
+    Micro\Identity\User\Application\QueryHandler\FetchOneUserHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\Query\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Query\FetchOneUserQuery', bus: 'query.identity' }
+
+    Micro\Identity\User\Application\QueryHandler\FindOneByUserHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\Query\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Query\FindOneByUserQuery', bus: 'query.identity' }
+
+    Micro\Identity\User\Application\QueryHandler\FindByCriteriaUserHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\Query\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Query\FindByCriteriaUserQuery', bus: 'query.identity' }
+
+    Micro\Identity\User\Application\QueryHandler\FindByEmailUserHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\Query\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Query\FindByEmailUserQuery', bus: 'query.identity' }
+
+    Micro\Identity\User\Application\QueryHandler\FindByUsernameUserHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\Query\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Query\FindByUsernameUserQuery', bus: 'query.identity' }
+
+    Micro\Identity\User\Application\QueryHandler\FindByIdentifierUserHandler:
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\Query\UserRepositoryInterface'
+        tags:
+            - { name: 'tactician.handler', command: 'Micro\Identity\User\Application\Query\FindByIdentifierUserQuery', bus: 'query.identity' }

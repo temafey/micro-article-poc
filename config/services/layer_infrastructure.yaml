@@ -1,0 +1,32 @@
+services:
+  _defaults:
+    autoconfigure: true
+    public: true
+
+  # Services
+  common.infrastructure.service.data_mapper.dbal:
+    class: Micro\Component\Common\Infrastructure\Service\DataMapper\DbalDataMapper
+    arguments:
+      - '@base.infrastructure.service.data_mapper.types.registry'
+
+  # Data Mapper types
+  base.infrastructure.service.data_mapper.types.array:
+    class: MicroModule\Base\Infrastructure\Service\DataMapper\Types\ArrayType
+
+  base.infrastructure.service.data_mapper.types.boolean:
+    class: MicroModule\Base\Infrastructure\Service\DataMapper\Types\BooleanType
+
+  base.infrastructure.service.data_mapper.types.integer:
+    class: MicroModule\Base\Infrastructure\Service\DataMapper\Types\IntegerType
+
+  base.infrastructure.service.data_mapper.types.json:
+    class: MicroModule\Base\Infrastructure\Service\DataMapper\Types\JsonType
+
+  base.infrastructure.service.data_mapper.types.registry:
+    class: MicroModule\Base\Infrastructure\Service\DataMapper\Types\TypeRegistry
+    calls:
+      - addType: [ '@base.infrastructure.service.data_mapper.types.array' ]
+      - addType: [ '@base.infrastructure.service.data_mapper.types.integer' ]
+      - addType: [ '@base.infrastructure.service.data_mapper.types.boolean' ]
+      - addType: [ '@base.infrastructure.service.data_mapper.types.json' ]
+

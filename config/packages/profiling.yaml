@@ -1,0 +1,76 @@
+# =============================================================================
+# Continuous Profiling Services Configuration (ADR-014 Phase 4.2)
+# =============================================================================
+# Provides continuous CPU profiling using ext-excimer and Pyroscope:
+# - HTTP request profiling (ProfilingRequestListener)
+# - Console command profiling (ProfilingConsoleListener)
+# - Collapsed stack trace format for Pyroscope ingestion
+#
+# Requirements:
+# - PHP ext-excimer extension (installed in Docker images)
+# - Pyroscope server (part of observability stack)
+#
+# Related: ADR-014-observability-stack-modernization.md
+# =============================================================================
+
+parameters:
+  # Profiling enabled flag - controls PyroscopeProfiler behavior
+  profiling.enabled: '%env(bool:PYROSCOPE_ENABLED)%'
+  profiling.server_url: '%env(PYROSCOPE_SERVER_ADDRESS)%'
+  profiling.application_name: '%env(OTEL_SERVICE_NAME)%'
+  profiling.sample_rate: '%env(int:PYROSCOPE_SAMPLE_RATE)%'
+  profiling.upload_interval: '%env(int:PYROSCOPE_UPLOAD_INTERVAL)%'
+
+services:
+  # ===========================================================================
+  # Pyroscope HTTP Client
+  # ===========================================================================
+  # Handles HTTP transport layer for sending profiling data to Pyroscope server.
+  # Separated from profiler logic for testability and security.
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Observability\Profiling\PyroscopeHttpClient:
+    arguments:
+      $serverUrl: '%profiling.server_url%'
+
+  # ===========================================================================
+  # Pyroscope Profiler
+  # ===========================================================================
+  # Core profiler using ext-excimer for CPU sampling.
+  # Collects stack traces and sends to Pyroscope in collapsed format.
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Observability\Profiling\PyroscopeProfiler:
+    arguments:
+      $applicationName: '%profiling.application_name%'
+      $httpClient: '@Micro\Component\Common\Infrastructure\Observability\Profiling\PyroscopeHttpClient'
+      $sampleRate: '%profiling.sample_rate%'
+      $uploadInterval: '%profiling.upload_interval%'
+      $enabled: '%profiling.enabled%'
+
+  # ===========================================================================
+  # HTTP Request Profiling Listener
+  # ===========================================================================
+  # Automatically profiles HTTP requests using Symfony kernel events.
+  # Uses PHP 8 #[AsEventListener] attributes for event registration.
+  # - Starts profiling on KernelEvents::REQUEST
+  # - Uploads profile on KernelEvents::TERMINATE
+  # - Adds labels: http_method, http_route, http_controller, http_status
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Observability\Profiling\ProfilingRequestListener:
+    autoconfigure: true
+    arguments:
+      $profiler: '@Micro\Component\Common\Infrastructure\Observability\Profiling\PyroscopeProfiler'
+
+  # ===========================================================================
+  # Console Command Profiling Listener
+  # ===========================================================================
+  # Automatically profiles console commands using Symfony console events.
+  # Uses PHP 8 #[AsEventListener] attributes for event registration.
+  # - Starts profiling on ConsoleEvents::COMMAND
+  # - Uploads profile on ConsoleEvents::TERMINATE
+  # - Adds labels: command_name, command_class, exit_code, exit_status
+  # - Skips non-essential commands (cache:clear, debug:*, list, help, about)
+  # ===========================================================================
+  Micro\Component\Common\Infrastructure\Observability\Profiling\ProfilingConsoleListener:
+    autoconfigure: true
+    arguments:
+      $profiler: '@Micro\Component\Common\Infrastructure\Observability\Profiling\PyroscopeProfiler'

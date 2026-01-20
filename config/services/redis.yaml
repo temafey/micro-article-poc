@@ -1,0 +1,16 @@
+# =============================================================================
+# Redis Service Configuration
+# =============================================================================
+# IMPORTANT: Base Redis service is now defined in config/packages/observability.yaml
+# to ensure proper decorator ordering with TracingRedis.
+#
+# This file is kept for organizational purposes and future Redis-related services.
+# =============================================================================
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  # Redis service defined in packages/observability.yaml for decorator ordering
+  # See: ADR-014 Phase 3.3 - Redis Tracing

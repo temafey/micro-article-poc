@@ -1,0 +1,11 @@
+services:
+  _defaults:
+    public: true
+
+  MicroModule\Saga\Storage\DBALSagaRepository:
+    arguments:
+      - '@doctrine.dbal.default_connection'
+      - 'sagas'
+#    calls:
+#      - setTracer: [ '@tracing.client' ]
+#      - setIsTracingEnabled: [ '%tracing.is_enabled%' ]

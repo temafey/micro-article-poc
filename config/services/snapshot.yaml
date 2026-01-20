@@ -1,0 +1,21 @@
+services:
+
+  # Snapshotting
+  MicroModule\Snapshotting\Snapshot\Trigger\EventCountTrigger:
+    class: MicroModule\Snapshotting\Snapshot\Trigger\EventCountTrigger
+    arguments:
+      - 1
+
+  micro_module.snapshotting.snapshot.storage:
+    class: MicroModule\Snapshotting\Snapshot\Storage\DBALSnapshotStore
+    public: true
+    arguments:
+      - '@doctrine.dbal.default_connection'
+      - '@broadway.serializer.payload'
+      - '@broadway.serializer.metadata'
+      - 'snapshots'
+      - false
+      - '@broadway.uuid.converter'
+
+  micro_module.snapshotting.event_sourcing.aggregate.factory:
+    class: MicroModule\Snapshotting\EventSourcing\PublicConstructorAggregateFactory

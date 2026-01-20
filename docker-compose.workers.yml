@@ -1,0 +1,94 @@
+# docker-compose.workers.yml - Shared Enqueue Workers
+#
+# Message queue consumers for all runtime configurations.
+# Use with base infrastructure + runtime overlay:
+#   docker compose -f docker-compose.yml -f docker-compose.fpm.yml -f docker-compose.workers.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.rr.yml -f docker-compose.workers.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.frank.yml -f docker-compose.workers.yml up -d
+#
+# Workers:
+#   - tasks: Task queue consumer
+#   - queue-events: Queue event consumer
+#   - events: Domain event consumer
+#   - taskevents: Task event consumer
+#
+# Part of Phase 9: Infrastructure Modernization (TASK-030)
+
+# YAML Anchors for DRY configuration
+x-worker-common: &worker-common
+  image: ${DOCKER_SERVER_HOST}/${DOCKER_PROJECT_PATH}/php${DOCKER_PHP_VERSION}-fpm-dev:${DOCKER_IMAGE_VERSION}
+  user: 1000:1000
+  working_dir: /app
+  restart: on-failure
+  networks:
+    - ${DOCKER_NETWORK_NAME}
+  volumes:
+    - ./:/app:rw
+    - ~/.composer/cache/:/.composer_cache/:rw
+  environment:
+    APP_ENV: "${APP_ENV:-dev}"
+    APP_DEBUG: "${APP_DEBUG:-0}"
+    # PHP OPcache optimizations for CLI workers
+    PHP_OPCACHE_ENABLE_CLI: "1"
+    PHP_OPCACHE_JIT: "function"
+    PHP_OPCACHE_JIT_BUFFER_SIZE: "64M"
+    # Xdebug disabled for workers
+    XDEBUG_MODE: "off"
+    # OpenTelemetry configuration (TASK-035)
+    OTEL_PHP_AUTOLOAD_ENABLED: "${OTEL_PHP_AUTOLOAD_ENABLED:-true}"
+    OTEL_SERVICE_NAME: "${OTEL_SERVICE_NAME:-micro-article-service}"
+    OTEL_SERVICE_VERSION: "${OTEL_SERVICE_VERSION:-1.0.0}"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://test-otel-lgtm:4318}"
+    OTEL_EXPORTER_OTLP_PROTOCOL: "${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}"
+    OTEL_TRACES_EXPORTER: "${OTEL_TRACES_EXPORTER:-otlp}"
+    OTEL_METRICS_EXPORTER: "${OTEL_METRICS_EXPORTER:-otlp}"
+    OTEL_LOGS_EXPORTER: "${OTEL_LOGS_EXPORTER:-otlp}"
+    OTEL_RESOURCE_ATTRIBUTES: "${OTEL_RESOURCE_ATTRIBUTES:-service.namespace=micro,deployment.environment=development}"
+    OTEL_TRACES_SAMPLER: "${OTEL_TRACES_SAMPLER:-parentbased_always_on}"
+    # CRITICAL: Use Cumulative temporality for Prometheus compatibility (TASK-14.5)
+    OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: "${OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE:-cumulative}"
+
+x-worker-depends: &worker-depends
+  test-micro-article-system-database:
+    condition: service_healthy
+  test-micro-article-system-rabbitmq:
+    condition: service_started
+  test-micro-article-system-redis:
+    condition: service_started
+
+services:
+  # Task Queue Consumer
+  test-micro-article-system-tasks:
+    <<: *worker-common
+    container_name: ${CI_SERVICE_NAME}_tasks
+    hostname: ${CI_SERVICE_NAME}-worker-tasks
+    command: ['php', '/app/bin/console', 'enqueue:consume', '-c', 'task', '-vvv']
+    depends_on:
+      <<: *worker-depends
+
+  # Queue Event Consumer
+  test-micro-article-system-queue-events:
+    <<: *worker-common
+    container_name: ${CI_SERVICE_NAME}_queue_events
+    hostname: ${CI_SERVICE_NAME}-worker-queue-events
+    command: ['php', '/app/bin/console', 'enqueue:consume', '-c', 'queueevent', '-vvv']
+    depends_on:
+      <<: *worker-depends
+
+  # Domain Event Consumer
+  test-micro-article-system-events:
+    <<: *worker-common
+    container_name: ${CI_SERVICE_NAME}_events
+    hostname: ${CI_SERVICE_NAME}-worker-events
+    command: ['php', '/app/bin/console', 'enqueue:consume', '-c', 'event', '-vvv']
+    depends_on:
+      <<: *worker-depends
+
+  # Task Event Consumer
+  test-micro-article-system-taskevents:
+    <<: *worker-common
+    container_name: ${CI_SERVICE_NAME}_taskevents
+    hostname: ${CI_SERVICE_NAME}-worker-taskevents
+    command: ['php', '/app/bin/console', 'enqueue:consume', '-c', 'taskevent', '-vvv']
+    depends_on:
+      <<: *worker-depends

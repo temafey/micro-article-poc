@@ -1,0 +1,1129 @@
+{
+	"info": {
+		"_postman_id": "61d24c17-2826-45c5-9b70-e6ab49ca51c5",
+		"name": "Article API V2 RoadRunner",
+		"description": "API collection for testing Article microservice operations.\n\n## Architecture\nThis microservice implements **Event Sourcing + CQRS** with **DDD layers**.\n\n## Setup Instructions\n1. Import the Environment file first\n2. Run the Login request first to authenticate (if auth is required)\n3. Use the Collection Runner for automated testing\n\n## API Base Path\n`/api/v2/article`\n\n## Article States\n`draft` → `published` → `archived`/`unpublished` → `deleted`",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "242400",
+		"_collection_link": "https://temafey-8608.postman.co/workspace/ExpoPlatform~a6123bb3-c4b9-4bfe-9a2c-5bab907e4fff/collection/242400-61d24c17-2826-45c5-9b70-e6ab49ca51c5?action=share&source=collection_link&creator=242400"
+	},
+	"item": [
+		{
+			"name": "Query Operations",
+			"item": [
+				{
+					"name": "List All Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('List successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse response",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Test: Response is an array",
+									"pm.test('Response is an array', function () {",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"// Store first article UUID for subsequent requests if available",
+									"if (jsonData.length > 0 && jsonData[0].uuid) {",
+									"    pm.environment.set('article_uuid', jsonData[0].uuid);",
+									"    console.log('Article UUID stored: ' + jsonData[0].uuid);",
+									"    ",
+									"    if (jsonData[0].slug) {",
+									"        pm.environment.set('article_slug', jsonData[0].slug);",
+									"        console.log('Article slug stored: ' + jsonData[0].slug);",
+									"    }",
+									"}",
+									"",
+									"console.log('Total article items:', jsonData.length);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								""
+							]
+						},
+						"description": "Get list of all article articles.\n\n**Query Parameters (all optional):**\n- `uuid` - Filter by UUID\n- `title` - Filter by title\n- `slug` - Filter by slug\n- `status` - Filter by status (draft, published, archived)\n- `eventId` - Filter by event ID\n- `publishedAt` - Filter by publish date\n- `archivedAt` - Filter by archive date\n\n**Response:** Array of ArticleDto objects"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Article by UUID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Get successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse response",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Test: Response contains article data",
+									"pm.test('Response contains article data', function () {",
+									"    pm.expect(jsonData).to.have.property('uuid');",
+									"});",
+									"",
+									"pm.test('Response has expected fields', function () {",
+									"    pm.expect(jsonData).to.have.property('title');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"});",
+									"",
+									"console.log('Retrieved article:', JSON.stringify(jsonData, null, 2));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/{{article_uuid}}",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"{{article_uuid}}"
+							]
+						},
+						"description": "Get a specific article article by UUID.\n\n**Note:** Run 'Create Article' or 'List All Article' first to populate the `article_uuid` variable.\n\n**Response Fields:**\n- `uuid` - Unique identifier\n- `title` - Article title\n- `shortDescription` - Brief summary\n- `description` - Full content\n- `slug` - URL-friendly identifier\n- `eventId` - Associated event ID\n- `status` - Current state (draft, published, archived)\n- `publishedAt` - Publication timestamp\n- `archivedAt` - Archive timestamp\n- `createdAt` - Creation timestamp\n- `updatedAt` - Last update timestamp"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Article by Slug",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Get by slug successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse response",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Test: Response contains article data",
+									"pm.test('Response contains article data', function () {",
+									"    pm.expect(jsonData).to.exist;",
+									"});",
+									"",
+									"console.log('Retrieved article by slug:', JSON.stringify(jsonData, null, 2));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/slug/{{article_slug}}",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"slug",
+								"{{article_slug}}"
+							]
+						},
+						"description": "Get a article article by its URL slug.\n\n**Use Case:** Retrieving article for SEO-friendly URLs.\n\n**Note:** Run 'List All Article' first to populate the `article_slug` variable."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Article by Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Get by event successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse response",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Test: Response exists",
+									"pm.test('Response exists', function () {",
+									"    pm.expect(jsonData).to.exist;",
+									"});",
+									"",
+									"console.log('Article for event:', JSON.stringify(jsonData, null, 2));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/event/{{event_id}}",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"event",
+								"{{event_id}}"
+							]
+						},
+						"description": "Get all article articles associated with a specific event.\n\n**Use Case:** Displaying event-specific article on event pages."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Published Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Get published successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse response",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Test: Response exists",
+									"pm.test('Response exists', function () {",
+									"    pm.expect(jsonData).to.exist;",
+									"});",
+									"",
+									"// If array, verify all items are published",
+									"if (Array.isArray(jsonData)) {",
+									"    pm.test('All items have published status', function () {",
+									"        jsonData.forEach(function(item) {",
+									"            if (item.status) {",
+									"                pm.expect(item.status).to.equal('published');",
+									"            }",
+									"        });",
+									"    });",
+									"    console.log('Published article count:', jsonData.length);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/published",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"published"
+							]
+						},
+						"description": "Get all article articles with 'published' status.\n\n**Use Case:** Public-facing article feeds showing only published content."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Archived Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Get archived successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse response",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Test: Response exists",
+									"pm.test('Response exists', function () {",
+									"    pm.expect(jsonData).to.exist;",
+									"});",
+									"",
+									"// If array, verify all items are archived",
+									"if (Array.isArray(jsonData)) {",
+									"    pm.test('All items have archived status', function () {",
+									"        jsonData.forEach(function(item) {",
+									"            if (item.status) {",
+									"                pm.expect(item.status).to.equal('archived');",
+									"            }",
+									"        });",
+									"    });",
+									"    console.log('Archived article count:', jsonData.length);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/archived",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"archived"
+							]
+						},
+						"description": "Get all article articles with 'archived' status.\n\n**Use Case:** Administrative view of archived content."
+					},
+					"response": []
+				},
+				{
+					"name": "Search Article with Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Search successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse response",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Test: Response is an array",
+									"pm.test('Response is an array', function () {",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"console.log('Search results:', jsonData.length);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/?status={{search_status}}&eventId={{event_id}}",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								""
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "{{search_status}}"
+								},
+								{
+									"key": "eventId",
+									"value": "{{event_id}}"
+								}
+							]
+						},
+						"description": "Search article with multiple filter criteria.\n\n**Available Filters:**\n- `uuid` - Exact UUID match\n- `title` - Title filter\n- `slug` - Slug filter\n- `status` - Status filter (draft, published, archived)\n- `eventId` - Event ID filter\n- `publishedAt` - Publication date filter\n- `archivedAt` - Archive date filter\n- `createdAt` - Creation date filter\n- `updatedAt` - Update date filter"
+					},
+					"response": []
+				}
+			],
+			"description": "Query operations (GET requests) for Article API following CQRS pattern."
+		},
+		{
+			"name": "Command Operations",
+			"item": [
+				{
+					"name": "Create Article",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate a unique slug based on timestamp",
+									"var timestamp = new Date().getTime();",
+									"var slug = 'test-article-' + timestamp;",
+									"pm.environment.set('generated_slug', slug);",
+									"console.log('Generated slug: ' + slug);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200 or 201",
+									"pm.test('Create successful - Status 200/201', function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Handle both array and object responses",
+									"var data = Array.isArray(jsonData) ? jsonData[0] : jsonData;",
+									"",
+									"// Store article_uuid for subsequent requests",
+									"if (data && data.uuid) {",
+									"    pm.environment.set('article_uuid', data.uuid);",
+									"    console.log('Article UUID stored: ' + data.uuid);",
+									"}",
+									"",
+									"if (data && data.slug) {",
+									"    pm.environment.set('article_slug', data.slug);",
+									"    console.log('Article slug stored: ' + data.slug);",
+									"}",
+									"",
+									"pm.test('Response contains UUID', function () {",
+									"    pm.expect(data).to.have.property('uuid');",
+									"});",
+									"",
+									"pm.test('Article created with draft status', function () {",
+									"    if (data.status) {",
+									"        pm.expect(data.status).to.equal('draft');",
+									"    }",
+									"});",
+									"",
+									"console.log('Created article:', JSON.stringify(data, null, 2));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"{{article_title}}\",\n    \"shortDescription\": \"{{article_short_description}}\",\n    \"description\": \"{{article_description}}\",\n    \"slug\": \"{{generated_slug}}\",\n    \"eventId\": {{event_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url_80}}/article/",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								""
+							]
+						},
+						"description": "Create a new article article.\n\n**Required Fields:**\n- `title` - Article headline\n- `slug` - URL-friendly identifier (auto-generated if not provided)\n\n**Optional Fields:**\n- `shortDescription` - Brief summary for listings\n- `description` - Full article content\n- `eventId` - Associated event ID\n\n**Note:** New articles are created with `draft` status by default.\n\n**Event Sourcing:** This command triggers `ArticleWasCreated` domain event."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Update successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Handle both array and object responses",
+									"var data = Array.isArray(jsonData) ? jsonData[0] : jsonData;",
+									"",
+									"pm.test('Response contains updated data', function () {",
+									"    pm.expect(data).to.have.property('uuid');",
+									"});",
+									"",
+									"pm.test('Title was updated', function () {",
+									"    var expectedTitle = pm.environment.get('article_title_updated');",
+									"    if (data.title && expectedTitle) {",
+									"        pm.expect(data.title).to.equal(expectedTitle);",
+									"    }",
+									"});",
+									"",
+									"console.log('Updated article:', JSON.stringify(data, null, 2));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"{{article_title_updated}}\",\n    \"shortDescription\": \"{{article_short_description_updated}}\",\n    \"description\": \"{{article_description_updated}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_80}}/article/{{article_uuid}}",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"{{article_uuid}}"
+							]
+						},
+						"description": "Update an existing article article.\n\n**Note:** Run 'Create Article' first to populate the `article_uuid` variable.\n\n**Updatable Fields:**\n- `title` - Article headline\n- `shortDescription` - Brief summary\n- `description` - Full content\n- `slug` - URL-friendly identifier\n- `eventId` - Associated event\n\n**Event Sourcing:** This command triggers `ArticleWasUpdated` domain event."
+					},
+					"response": []
+				},
+				{
+					"name": "Publish Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Publish successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test('Article status is published', function () {",
+									"    if (jsonData.status) {",
+									"        pm.expect(jsonData.status).to.equal('published');",
+									"    }",
+									"});",
+									"",
+									"pm.test('PublishedAt timestamp is set', function () {",
+									"    if (jsonData.publishedAt) {",
+									"        pm.expect(jsonData.publishedAt).to.exist;",
+									"    }",
+									"});",
+									"",
+									"console.log('Published article:', JSON.stringify(jsonData, null, 2));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/{{article_uuid}}/publish",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"{{article_uuid}}",
+								"publish"
+							]
+						},
+						"description": "Publish a article article (change status from draft to published).\n\n**State Transition:** `draft` → `published`\n\n**Side Effects:**\n- Sets `publishedAt` timestamp\n- Article becomes visible in public feeds\n\n**Event Sourcing:** This command triggers `ArticleWasPublished` domain event."
+					},
+					"response": []
+				},
+				{
+					"name": "Unpublish Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Unpublish successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test('Article status changed', function () {",
+									"    if (jsonData.status) {",
+									"        pm.expect(jsonData.status).to.not.equal('published');",
+									"    }",
+									"});",
+									"",
+									"console.log('Unpublished article:', JSON.stringify(jsonData, null, 2));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/{{article_uuid}}/unpublish",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"{{article_uuid}}",
+								"unpublish"
+							]
+						},
+						"description": "Unpublish a article article (revert to draft status).\n\n**State Transition:** `published` → `draft`\n\n**Side Effects:**\n- Article is removed from public feeds\n- Can be edited and republished\n\n**Event Sourcing:** This command triggers `ArticleWasUnpublished` domain event."
+					},
+					"response": []
+				},
+				{
+					"name": "Archive Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200",
+									"pm.test('Archive successful - Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test('Article status is archived', function () {",
+									"    if (jsonData.status) {",
+									"        pm.expect(jsonData.status).to.equal('archived');",
+									"    }",
+									"});",
+									"",
+									"pm.test('ArchivedAt timestamp is set', function () {",
+									"    if (jsonData.archivedAt) {",
+									"        pm.expect(jsonData.archivedAt).to.exist;",
+									"    }",
+									"});",
+									"",
+									"console.log('Archived article:', JSON.stringify(jsonData, null, 2));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/{{article_uuid}}/archive",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"{{article_uuid}}",
+								"archive"
+							]
+						},
+						"description": "Archive a article article.\n\n**State Transition:** `published` → `archived`\n\n**Side Effects:**\n- Sets `archivedAt` timestamp\n- Article is removed from public feeds\n- Article moves to archived section\n\n**Event Sourcing:** This command triggers `ArticleWasArchived` domain event."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test: Status code is 200 or 204",
+									"pm.test('Delete successful - Status 200/204', function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+									"});",
+									"",
+									"console.log('Deleted article UUID:', pm.environment.get('article_uuid'));",
+									"",
+									"// Clear the article_uuid variable after deletion",
+									"pm.environment.unset('article_uuid');",
+									"pm.environment.unset('article_slug');",
+									"console.log('article_uuid and article_slug variables cleared');"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url_80}}/article/{{article_uuid}}",
+							"host": [
+								"{{base_url_80}}"
+							],
+							"path": [
+								"article",
+								"{{article_uuid}}"
+							]
+						},
+						"description": "Delete a article article.\n\n**Note:** Run 'Create Article' first to populate the `article_uuid` variable.\n\n**Important:**\n- This may be a soft delete depending on implementation\n- Check if article can be restored after deletion\n\n**Event Sourcing:** This command triggers `ArticleWasDeleted` domain event."
+					},
+					"response": []
+				}
+			],
+			"description": "Command operations (POST, PUT, DELETE requests) for Article API following CQRS pattern.\n\nThese operations trigger domain events that are stored in the event store."
+		},
+		{
+			"name": "Workflow Tests",
+			"item": [
+				{
+					"name": "Full Lifecycle: Create → Publish → Archive → Delete",
+					"item": [
+						{
+							"name": "1. Create Draft Article",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Generate unique identifiers for this test run",
+											"var timestamp = new Date().getTime();",
+											"pm.environment.set('test_slug', 'lifecycle-test-' + timestamp);",
+											"pm.environment.set('test_title', 'Lifecycle Test Article ' + timestamp);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Create successful', function () {",
+											"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+											"});",
+											"",
+											"var jsonData = pm.response.json();",
+											"var data = Array.isArray(jsonData) ? jsonData[0] : jsonData;",
+											"",
+											"if (data && data.uuid) {",
+											"    pm.environment.set('lifecycle_article_uuid', data.uuid);",
+											"    console.log('Lifecycle test UUID: ' + data.uuid);",
+											"}",
+											"",
+											"pm.test('Status is draft', function () {",
+											"    if (data.status) {",
+											"        pm.expect(data.status).to.equal('draft');",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"{{test_title}}\",\n    \"shortDescription\": \"Test article for lifecycle workflow\",\n    \"description\": \"This article tests the full article lifecycle: draft → published → archived → deleted\",\n    \"slug\": \"{{test_slug}}\",\n    \"eventId\": {{event_id}}\n}"
+								},
+								"url": {
+									"raw": "{{base_url_80}}/article/",
+									"host": [
+										"{{base_url_80}}"
+									],
+									"path": [
+										"article",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "2. Publish Article",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Publish successful', function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"var jsonData = pm.response.json();",
+											"",
+											"pm.test('Status changed to published', function () {",
+											"    if (jsonData.status) {",
+											"        pm.expect(jsonData.status).to.equal('published');",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url_80}}/article/{{lifecycle_article_uuid}}/publish",
+									"host": [
+										"{{base_url_80}}"
+									],
+									"path": [
+										"article",
+										"{{lifecycle_article_uuid}}",
+										"publish"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "3. Archive Article",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Archive successful', function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"var jsonData = pm.response.json();",
+											"",
+											"pm.test('Status changed to archived', function () {",
+											"    if (jsonData.status) {",
+											"        pm.expect(jsonData.status).to.equal('archived');",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url_80}}/article/{{lifecycle_article_uuid}}/archive",
+									"host": [
+										"{{base_url_80}}"
+									],
+									"path": [
+										"article",
+										"{{lifecycle_article_uuid}}",
+										"archive"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "4. Delete Article",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Delete successful', function () {",
+											"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+											"});",
+											"",
+											"// Cleanup",
+											"pm.environment.unset('lifecycle_article_uuid');",
+											"pm.environment.unset('test_slug');",
+											"pm.environment.unset('test_title');",
+											"console.log('Lifecycle test completed and cleaned up');"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url_80}}/article/{{lifecycle_article_uuid}}",
+									"host": [
+										"{{base_url_80}}"
+									],
+									"path": [
+										"article",
+										"{{lifecycle_article_uuid}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "Tests the complete article lifecycle from creation through deletion."
+				}
+			],
+			"description": "End-to-end workflow tests that validate complete business processes."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level pre-request script",
+					"console.log('========================================');",
+					"console.log('Request: ' + pm.info.requestName);",
+					"console.log('Method: ' + pm.request.method);",
+					"console.log('URL: ' + pm.request.url.toString());",
+					"console.log('========================================');"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level test script",
+					"console.log('Response time: ' + pm.response.responseTime + 'ms');",
+					"console.log('Status: ' + pm.response.code + ' ' + pm.response.status);",
+					"",
+					"// Check for common error responses",
+					"if (pm.response.code === 401) {",
+					"    console.error('ERROR 401: Not authenticated.');",
+					"    console.error('Solution: Check if authentication is required for this endpoint.');",
+					"}",
+					"if (pm.response.code === 403) {",
+					"    console.error('ERROR 403: Forbidden.');",
+					"    console.error('Possible causes:');",
+					"    console.error('  - Insufficient permissions');",
+					"    console.error('  - Resource access denied');",
+					"}",
+					"if (pm.response.code === 404) {",
+					"    console.error('ERROR 404: Not Found.');",
+					"    console.error('Possible causes:');",
+					"    console.error('  - Invalid UUID');",
+					"    console.error('  - Resource was deleted');",
+					"    console.error('  - Run Create Article first to populate article_uuid');",
+					"}",
+					"if (pm.response.code === 400) {",
+					"    console.error('ERROR 400: Bad Request.');",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.message) {",
+					"        console.error('Message: ' + jsonData.message);",
+					"    }",
+					"    if (jsonData.errors) {",
+					"        console.error('Errors: ' + JSON.stringify(jsonData.errors));",
+					"    }",
+					"}",
+					"if (pm.response.code === 422) {",
+					"    console.error('ERROR 422: Unprocessable Entity.');",
+					"    var jsonData = pm.response.json();",
+					"    if (jsonData.violations) {",
+					"        console.error('Validation errors: ' + JSON.stringify(jsonData.violations));",
+					"    }",
+					"}",
+					"if (pm.response.code === 500) {",
+					"    console.error('ERROR 500: Internal Server Error.');",
+					"    console.error('Check server logs: make logs-server');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080/api/v2",
+			"type": "string"
+		}
+	]
+}

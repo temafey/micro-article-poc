@@ -1,0 +1,61 @@
+parameters:
+  # Microservice applications
+  global.project.name: '%env(APP_PROJECT_NAME)%'
+  global.acl.name: '%env(APP_ACL_NAME)%'
+  #micro.service.name: '%env(APP_SERVICE_NAME)%'
+  micro.service.name: 'article'
+
+  # App
+  app.env: '%env(APP_ENV)%'
+  app.root_path: !php/const ROOT_PATH
+  app.secret: '%env(APP_SECRET)%'
+  #app.version: '%env(APP_VERSION)%'
+  app.version: '1.0.0'
+  app.service_name: '%micro.service.name%'
+
+  # PostgreSQL
+  db.postgresql.host: '%env(APP_DATABASE_HOST)%'
+  db.postgresql.port: "%env(APP_DATABASE_PORT)%"
+  db.postgresql.dbname: '%env(APP_DATABASE_NAME)%'
+  db.postgresql.user: '%env(APP_DATABASE_LOGIN)%'
+  db.postgresql.password: '%env(APP_DATABASE_PASSWORD)%'
+
+  # Redis
+  redis.host: '%env(APP_REDIS_HOST)%'
+  redis.port: '%env(APP_REDIS_PORT)%'
+
+  # Enqueue (main configs)
+  enqueue.queue.host: '%env(APP_RABBITMQ_HOST)%'
+  enqueue.queue.port: '%env(APP_RABBITMQ_PORT)%'
+
+  # Enqueue (application names)
+  enqueue.client.prefix: '%global.project.name%'
+  enqueue.app.name: '%micro.service.name%'
+  enqueue.app.name.global: '%global.acl.name%'
+
+  # Enqueue (client applications)
+  enqueue.topic.task: 'task'
+  enqueue.topic.taskevent: 'taskevent'
+  enqueue.topic.event: 'event'
+  enqueue.topic.queueevent: 'queueevent'
+  enqueue.topic.global.{{domainLowerCase}}: '{{domainLowerCase}}.queueevent'
+
+
+  enqueue.topic.global.article: 'article.queueevent'
+  # Enqueue (transport groups)
+  enqueue.transport.group-id: '%micro.service.name%'
+  enqueue.transport.group-id.global: '%global.project.name%' #@todo May be need to move into env vars in ci/cd
+
+  # Nelmio
+  nelmio.cors.allow_origin: '%env(APP_CORS_ALLOW_ORIGIN)%'
+
+  # Temporal
+#  temporal.host: '%env(TEMPORAL_CLI_ADDRESS)%'
+
+  # OpenTelemetry Circuit Breaker
+  # Part of TASK-15: OpenTelemetry Resilience (Phase 15)
+  otel.circuit_breaker.enabled: '%env(bool:OTEL_CIRCUIT_BREAKER_ENABLED)%'
+  otel.circuit_breaker.time_window_seconds: '%env(int:OTEL_CB_TIME_WINDOW)%'
+  otel.circuit_breaker.failure_rate_threshold: '%env(int:OTEL_CB_FAILURE_RATE)%'
+  otel.circuit_breaker.minimum_requests: '%env(int:OTEL_CB_MIN_REQUESTS)%'
+  otel.circuit_breaker.interval_to_half_open_seconds: '%env(int:OTEL_CB_HALF_OPEN_INTERVAL)%'

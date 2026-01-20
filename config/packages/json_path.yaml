@@ -1,0 +1,10 @@
+# Symfony 8.0 JsonPath Configuration
+# Provides RFC 9535 JSONPath filtering for query results.
+# JsonPath enables flexible post-query filtering using standard JSONPath expressions.
+
+services:
+    # JsonPath Filter Service
+    Micro\Component\Common\Infrastructure\Filter\JsonPathFilterInterface:
+        alias: Micro\Component\Common\Infrastructure\Filter\JsonPathFilter
+
+    Micro\Component\Common\Infrastructure\Filter\JsonPathFilter: ~

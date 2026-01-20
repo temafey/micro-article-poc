@@ -1,0 +1,108 @@
+# Deptrac Configuration for DDD Microservice Architecture
+# Enforces layer dependency rules following Domain-Driven Design principles
+#
+# Layer Hierarchy (strict dependencies):
+#   Domain -> (no dependencies, pure business logic)
+#   Application -> Domain
+#   Infrastructure -> Domain, Application, Common
+#   Presentation -> Application, Infrastructure, Common
+#   Common -> (shared utilities, no domain dependencies)
+
+deptrac:
+  paths:
+    - ./src
+
+  exclude_files:
+    - '#.*test.*#i'
+    - '#.*spec.*#i'
+    - '#.*Migration.*#'
+
+  layers:
+    # Domain Layer - Core business logic, entities, value objects, domain events
+    # MUST NOT depend on any other layer (pure domain model)
+    - name: Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^Micro\\\\[A-Za-z]+\\\\Domain\\\\.*#'
+
+    # Application Layer - Use cases, command/query handlers, DTOs, sagas
+    # Can only depend on Domain layer
+    - name: Application
+      collectors:
+        - type: classNameRegex
+          value: '#^Micro\\\\[A-Za-z]+\\\\Application\\\\.*#'
+
+    # Infrastructure Layer - Repository implementations, external services, adapters
+    # Can depend on Domain, Application, and Common
+    - name: Infrastructure
+      collectors:
+        - type: classNameRegex
+          value: '#^Micro\\\\[A-Za-z]+\\\\Infrastructure\\\\.*#'
+
+    # Presentation Layer - REST controllers, CLI commands, API endpoints
+    # Can depend on Application, Infrastructure, and Common
+    - name: Presentation
+      collectors:
+        - type: classNameRegex
+          value: '#^Micro\\\\[A-Za-z]+\\\\Presentation\\\\.*#'
+
+    # Common Module - Shared utilities, base classes, cross-cutting concerns
+    # Should not depend on domain-specific code
+    - name: Common
+      collectors:
+        - type: classNameRegex
+          value: '#^Micro\\\\Common\\\\.*#'
+
+    # Component Module - Shared components and infrastructure
+    - name: Component
+      collectors:
+        - type: classNameRegex
+          value: '#^Micro\\\\Component\\\\.*#'
+
+  ruleset:
+    # Domain Layer: NO external dependencies (pure business logic)
+    # Only PHP built-ins and value object libraries allowed
+    Domain:
+      - Common
+      - Component
+
+    # Application Layer: Can use Domain concepts
+    Application:
+      - Domain
+      - Common
+      - Component
+
+    # Infrastructure Layer: Implements interfaces from Domain/Application
+    Infrastructure:
+      - Domain
+      - Application
+      - Common
+      - Component
+
+    # Presentation Layer: Uses Application services, may access Infrastructure
+    Presentation:
+      - Application
+      - Infrastructure
+      - Common
+      - Component
+
+    # Common Module: Shared utilities available to all layers
+    Common:
+      - Component
+
+    # Component Module: Base infrastructure components
+    Component: ~
+
+  formatters:
+    graphviz:
+      hidden_layers:
+        - Component
+      groups:
+        DDD:
+          - Domain
+          - Application
+          - Infrastructure
+          - Presentation
+        Shared:
+          - Common
+          - Component

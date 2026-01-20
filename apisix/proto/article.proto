@@ -1,0 +1,202 @@
+// Article API gRPC Service Definition
+// Part of Phase 8: API Gateway Modernization (TASK-027)
+//
+// This proto file enables gRPC transcoding in APISIX gateway,
+// allowing REST clients to call gRPC-style services.
+
+syntax = "proto3";
+
+package micro.article.v1;
+
+option go_package = "micro/article/v1;articlev1";
+
+// ============================================================================
+// MESSAGES - Request/Response definitions
+// ============================================================================
+
+// Common types
+message UUID {
+  string value = 1;
+}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+// Article entity representation
+message Article {
+  string id = 1;
+  string title = 2;
+  string slug = 3;
+  string body = 4;
+  string status = 5;           // draft, published, archived, deleted
+  string category = 6;
+  repeated string tags = 7;
+  string author_id = 8;
+  string created_at = 9;       // ISO 8601 format
+  string updated_at = 10;      // ISO 8601 format
+  string published_at = 11;    // ISO 8601 format (nullable)
+}
+
+// Pagination parameters
+message PaginationRequest {
+  int32 page = 1;
+  int32 per_page = 2;
+}
+
+message PaginationResponse {
+  int32 current_page = 1;
+  int32 per_page = 2;
+  int32 total_items = 3;
+  int32 total_pages = 4;
+}
+
+// ============================================================================
+// CREATE Operations
+// ============================================================================
+
+message CreateArticleRequest {
+  string title = 1;
+  string body = 2;
+  string category = 3;
+  repeated string tags = 4;
+  string author_id = 5;
+}
+
+message CreateArticleResponse {
+  string id = 1;
+  string message = 2;
+  Article article = 3;
+}
+
+// ============================================================================
+// READ Operations
+// ============================================================================
+
+// Get single article by ID
+message GetArticleRequest {
+  string id = 1;
+}
+
+message GetArticleResponse {
+  Article article = 1;
+}
+
+// List article with pagination and filters
+message ListArticleRequest {
+  PaginationRequest pagination = 1;
+  string status = 2;           // Optional filter by status
+  string category = 3;         // Optional filter by category
+  string author_id = 4;        // Optional filter by author
+  string search = 5;           // Optional full-text search
+}
+
+message ListArticleResponse {
+  repeated Article items = 1;
+  PaginationResponse pagination = 2;
+}
+
+// Get article by slug
+message GetArticleBySlugRequest {
+  string slug = 1;
+}
+
+message GetArticleBySlugResponse {
+  Article article = 1;
+}
+
+// ============================================================================
+// UPDATE Operations
+// ============================================================================
+
+message UpdateArticleRequest {
+  string id = 1;
+  string title = 2;
+  string body = 3;
+  string category = 4;
+  repeated string tags = 5;
+}
+
+message UpdateArticleResponse {
+  string message = 1;
+  Article article = 2;
+}
+
+// ============================================================================
+// STATUS Transitions
+// ============================================================================
+
+message PublishArticleRequest {
+  string id = 1;
+}
+
+message PublishArticleResponse {
+  string message = 1;
+  Article article = 2;
+}
+
+message UnpublishArticleRequest {
+  string id = 1;
+}
+
+message UnpublishArticleResponse {
+  string message = 1;
+  Article article = 2;
+}
+
+message ArchiveArticleRequest {
+  string id = 1;
+}
+
+message ArchiveArticleResponse {
+  string message = 1;
+  Article article = 2;
+}
+
+// ============================================================================
+// DELETE Operations
+// ============================================================================
+
+message DeleteArticleRequest {
+  string id = 1;
+}
+
+message DeleteArticleResponse {
+  string message = 1;
+}
+
+// ============================================================================
+// SERVICE Definition
+// ============================================================================
+
+// ArticleService provides CRUD operations for article articles
+// with event sourcing and CQRS pattern support.
+service ArticleService {
+  // Create a new article article (returns draft status)
+  rpc CreateArticle(CreateArticleRequest) returns (CreateArticleResponse);
+
+  // Get a single article article by ID
+  rpc GetArticle(GetArticleRequest) returns (GetArticleResponse);
+
+  // Get a single article article by slug
+  rpc GetArticleBySlug(GetArticleBySlugRequest) returns (GetArticleBySlugResponse);
+
+  // List article articles with pagination and filters
+  rpc ListArticle(ListArticleRequest) returns (ListArticleResponse);
+
+  // Update an existing article article
+  rpc UpdateArticle(UpdateArticleRequest) returns (UpdateArticleResponse);
+
+  // Publish a draft article article
+  rpc PublishArticle(PublishArticleRequest) returns (PublishArticleResponse);
+
+  // Unpublish a published article article (return to draft)
+  rpc UnpublishArticle(UnpublishArticleRequest) returns (UnpublishArticleResponse);
+
+  // Archive a article article
+  rpc ArchiveArticle(ArchiveArticleRequest) returns (ArchiveArticleResponse);
+
+  // Soft delete a article article
+  rpc DeleteArticle(DeleteArticleRequest) returns (DeleteArticleResponse);
+}

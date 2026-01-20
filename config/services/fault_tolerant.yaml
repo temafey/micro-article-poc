@@ -1,0 +1,12 @@
+services:
+  MicroModule\FaultTolerance\RedisAlerting\AlertingStorageFaultTolerantRepository:
+    autowire: true
+    arguments:
+      - '@Redis'
+      - { host: '%redis.host%', port: '%redis.port%' }
+
+  MicroModule\FaultTolerance\Saga\SagaFallResistant:
+    arguments:
+      - '@MicroModule\Saga\Storage\DBALSagaRepository'
+      - '@Broadway\EventStore\Dbal\DBALEventStore'
+      - '@broadway.saga.multiple_saga_manager'

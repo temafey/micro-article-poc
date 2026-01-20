@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Micro\Article\Application\CommandHandler\Task;
+
+use Micro\Article\Application\Command\Task\ArticleDeleteTaskCommand;
+use Micro\Article\Domain\Repository\TaskRepositoryInterface;
+use MicroModule\Base\Application\Command\CommandInterface;
+use MicroModule\Base\Application\CommandHandler\CommandHandlerInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+
+/**
+ * @class ArticleDeleteTaskCommandHandler
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ */
+#[AutoconfigureTag(name: 'tactician.handler', attributes: [
+    'command' => ArticleDeleteTaskCommand::class,
+    'bus' => 'command.article',
+])]
+class ArticleDeleteTaskCommandHandler implements CommandHandlerInterface
+{
+    public function __construct(
+        protected TaskRepositoryInterface $taskRepository,
+    ) {
+    }
+
+    /**
+     * Handle ArticleDeleteTaskCommand command.
+     */
+    public function handle(CommandInterface $articleDeleteTaskCommand): bool
+    {
+        $this->taskRepository->addArticleDeleteTask(
+            $articleDeleteTaskCommand->getProcessUuid(),
+            $articleDeleteTaskCommand->getUuid()
+        );
+
+        return true;
+    }
+}

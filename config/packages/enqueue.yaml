@@ -1,0 +1,121 @@
+enqueue:
+
+  # Consuming command task, create command and start main processes
+  task:
+    transport:
+      dsn: 'amqp://'
+      connection_factory_class: 'Enqueue\AmqpBunny\AmqpConnectionFactory'
+      host: '%env(APP_RABBITMQ_HOST)%'
+      port: '%env(APP_RABBITMQ_PORT)%'
+      user: '%env(APP_RABBITMQ_USER)%'
+      pass: '%env(APP_RABBITMQ_PASS)%'
+      vhost: '%env(APP_RABBITMQ_VHOST)%'
+      heartbeat: 10
+      global:
+        group.id: '%enqueue.transport.group-id%'
+        metadata.broker.list: '%enqueue.queue.host%:%enqueue.queue.port%'
+      topic:
+        auto.offset.reset: beginning
+      commit_async: true
+    client:
+      prefix: '%enqueue.client.prefix%'
+      app_name: '%enqueue.app.name%'
+      default_queue: '%enqueue.topic.task%'
+      router_topic: '%enqueue.topic.task%'
+      router_queue: '%enqueue.topic.task%'
+    job: true
+
+  # Producing error of consumed commands to control correctness of workflow
+  event:
+    transport:
+      dsn: 'amqp://'
+      connection_factory_class: 'Enqueue\AmqpBunny\AmqpConnectionFactory'
+      host: '%env(APP_RABBITMQ_HOST)%'
+      port: '%env(APP_RABBITMQ_PORT)%'
+      user: '%env(APP_RABBITMQ_USER)%'
+      pass: '%env(APP_RABBITMQ_PASS)%'
+      vhost: '%env(APP_RABBITMQ_VHOST)%'
+      heartbeat: 10
+      global:
+        group.id: '%enqueue.transport.group-id%'
+        metadata.broker.list: '%enqueue.queue.host%:%enqueue.queue.port%'
+      topic:
+        auto.offset.reset: beginning
+      commit_async: true
+    client:
+      prefix: '%enqueue.client.prefix%'
+      app_name: '%enqueue.app.name%'
+      default_queue: '%enqueue.topic.event%'
+      router_topic: '%enqueue.topic.event%'
+      router_queue: '%enqueue.topic.event%'
+
+  # Consuming event from 3rd party services and create command task
+  queueevent:
+    transport:
+      dsn: 'amqp://'
+      connection_factory_class: 'Enqueue\AmqpBunny\AmqpConnectionFactory'
+      host: '%env(APP_RABBITMQ_HOST)%'
+      port: '%env(APP_RABBITMQ_PORT)%'
+      user: '%env(APP_RABBITMQ_USER)%'
+      pass: '%env(APP_RABBITMQ_PASS)%'
+      vhost: '%env(APP_RABBITMQ_VHOST)%'
+      heartbeat: 10
+      global:
+        group.id: '%enqueue.transport.group-id%'
+        metadata.broker.list: '%enqueue.queue.host%:%enqueue.queue.port%'
+      topic:
+        auto.offset.reset: beginning
+      commit_async: true
+    client:
+      prefix: '%enqueue.client.prefix%'
+      app_name: '%enqueue.app.name%'
+      default_queue: '%enqueue.topic.queueevent%'
+      router_topic: '%enqueue.topic.queueevent%'
+      router_queue: '%enqueue.topic.queueevent%'
+
+  # Producing statuses of consumed commands to control correctness of workflow
+  taskevent:
+    transport:
+      dsn: 'amqp://'
+      connection_factory_class: 'Enqueue\AmqpBunny\AmqpConnectionFactory'
+      host: '%env(APP_RABBITMQ_HOST)%'
+      port: '%env(APP_RABBITMQ_PORT)%'
+      user: '%env(APP_RABBITMQ_USER)%'
+      pass: '%env(APP_RABBITMQ_PASS)%'
+      vhost: '%env(APP_RABBITMQ_VHOST)%'
+      heartbeat: 10
+      global:
+        group.id: '%enqueue.transport.group-id%'
+        metadata.broker.list: '%enqueue.queue.host%:%enqueue.queue.port%'
+      topic:
+        auto.offset.reset: beginning
+      commit_async: true
+    client:
+      prefix: '%enqueue.client.prefix%'
+      app_name: '%enqueue.app.name%'
+      default_queue: '%enqueue.topic.taskevent%'
+      router_topic: '%enqueue.topic.taskevent%'
+      router_queue: '%enqueue.topic.taskevent%'
+
+  global.article:
+    transport:
+      dsn: 'amqp://'
+      connection_factory_class: 'Enqueue\AmqpBunny\AmqpConnectionFactory'
+      host: '%env(APP_RABBITMQ_HOST)%'
+      port: '%env(APP_RABBITMQ_PORT)%'
+      user: '%env(APP_RABBITMQ_USER)%'
+      pass: '%env(APP_RABBITMQ_PASS)%'
+      vhost: '%env(APP_RABBITMQ_VHOST)%'
+      heartbeat: 10
+      global:
+        group.id: '%enqueue.transport.group-id.global%'
+        metadata.broker.list: '%enqueue.queue.host%:%enqueue.queue.port%'
+      topic:
+        auto.offset.reset: beginning
+      commit_async: true
+    client:
+      prefix: '%enqueue.client.prefix%'
+      app_name: '%enqueue.app.name.global%'
+      default_queue: '%enqueue.topic.global.article%'
+      router_topic: '%enqueue.topic.global.article%'
+      router_queue: '%enqueue.topic.global.article%'

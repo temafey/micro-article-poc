@@ -1,0 +1,84 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: false
+        public: true
+
+    ###############################
+    # JWT Infrastructure - Redis Token Repository
+    # Pure Redis architecture - no Event Sourcing overhead
+    # @see docs/adr/ADR-JWT-REDIS-ARCHITECTURE.md
+    ###############################
+
+    Micro\Identity\Jwt\Infrastructure\Repository\Redis\RedisTokenRepositoryInterface:
+        class: Micro\Identity\Jwt\Infrastructure\Repository\Redis\RedisTokenRepository
+        arguments:
+            - '@Redis'
+            - '@monolog.logger.security'
+
+    ###############################
+    # User Infrastructure - Read Model Stores
+    ###############################
+
+    identity.user.infrastructure.repository.storage.read_model.dbal:
+        class: Micro\Identity\User\Infrastructure\Repository\Storage\DBALReadModelStore
+        arguments:
+            - '@doctrine.dbal.default_connection'
+            - '%identity.user.read_model_table%'
+            - 'uuid'
+            - '@common.infrastructure.service.data_mapper.dbal'
+
+    ###############################
+    # User Infrastructure - Query Repository
+    ###############################
+
+    Micro\Identity\User\Domain\Repository\Query\UserRepositoryInterface:
+        class: Micro\Identity\User\Infrastructure\Repository\Query\UserRepository
+        arguments:
+            - '@identity.user.infrastructure.repository.storage.read_model.dbal'
+
+    ###############################
+    # User Infrastructure - ReadModel Repository
+    ###############################
+
+    Micro\Identity\User\Domain\Repository\ReadModel\UserRepositoryInterface:
+        class: Micro\Identity\User\Infrastructure\Repository\ReadModel\UserRepository
+        arguments:
+            - '@identity.user.infrastructure.repository.storage.read_model.dbal'
+            - '@Micro\Identity\User\Domain\Factory\ReadModelFactoryInterface'
+            - '@Micro\Identity\User\Domain\Factory\ValueObjectFactoryInterface'
+
+    ###############################
+    # User Infrastructure - Event Sourcing Repository
+    ###############################
+
+    Micro\Identity\User\Domain\Repository\EventSourcingStore\UserRepositoryInterface:
+        class: Micro\Identity\User\Infrastructure\Repository\EventSourcingStore\UserRepository
+
+    ###############################
+    # User Infrastructure - EntityStore Repository
+    ###############################
+
+    Micro\Identity\User\Domain\Repository\EntityStore\UserRepositoryInterface:
+        class: Micro\Identity\User\Infrastructure\Repository\EntityStore\UserRepository
+
+    ###############################
+    # User Infrastructure - Uniqueness Checker
+    ###############################
+
+    Micro\Identity\User\Domain\Service\UserUniquenessCheckerInterface:
+        class: Micro\Identity\User\Infrastructure\Service\UserUniquenessChecker
+        arguments:
+            - '@Micro\Identity\User\Domain\Repository\Query\UserRepositoryInterface'
+
+    ###############################
+    # JWT Infrastructure - Signer
+    ###############################
+
+    Micro\Identity\Jwt\Domain\Service\JwtSignerInterface:
+        class: Micro\Identity\Jwt\Infrastructure\Service\JwtSigner
+        arguments:
+            - '%identity.jwt.secret_key%'
+            - '%identity.jwt.public_key%'
+            - '%identity.jwt.passphrase%'
+            - '%identity.jwt.algorithm%'

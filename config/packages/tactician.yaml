@@ -1,0 +1,28 @@
+tactician:
+  default_bus: command.article
+  commandbus:
+
+    command.article:
+      middleware:
+        - tactician.middleware.logger
+        - Micro\Component\Common\Infrastructure\Security\SignedMessageMiddleware
+        - tactician.middleware.event
+        - tactician.commandbus.command.article.middleware.command_handler
+
+    query.article:
+      middleware:
+        - tactician.middleware.logger
+        - tactician.middleware.event
+        - tactician.commandbus.query.article.middleware.command_handler
+
+    command.identity:
+      middleware:
+        - tactician.middleware.logger
+        - tactician.middleware.event
+        - tactician.commandbus.command.identity.middleware.command_handler
+
+    query.identity:
+      middleware:
+        - tactician.middleware.logger
+        - tactician.middleware.event
+        - tactician.commandbus.query.identity.middleware.command_handler

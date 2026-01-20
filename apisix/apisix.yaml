@@ -1,0 +1,908 @@
+# APISIX Routes and Upstreams Configuration
+# Part of Phase 8: API Gateway Modernization (TASK-023)
+#
+# This file defines routes, upstreams, and services in declarative format.
+# Used when APISIX runs in standalone mode or for initial configuration.
+
+#
+# ============================================================================
+# UPSTREAMS - Backend service definitions
+# ============================================================================
+#
+
+upstreams:
+  # PHP-FPM via Nginx (port 80)
+  - id: "upstream-fpm"
+    name: "PHP-FPM Runtime"
+    desc: "Nginx + PHP-FPM backend"
+    type: roundrobin
+    nodes:
+      "test-micro-article-system-nginx:80": 1
+    timeout:
+      connect: 5
+      send: 30
+      read: 30
+    retries: 2
+    retry_timeout: 3
+    # Health check for FPM
+    checks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 5
+          successes: 2
+        unhealthy:
+          interval: 5
+          http_failures: 3
+
+  # RoadRunner (port 8080)
+  - id: "upstream-roadrunner"
+    name: "RoadRunner Runtime"
+    desc: "RoadRunner HTTP server"
+    type: roundrobin
+    nodes:
+      "test-micro-article-system-roadrunner:8080": 1
+    timeout:
+      connect: 5
+      send: 30
+      read: 30
+    retries: 2
+    retry_timeout: 3
+    checks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 5
+          successes: 2
+        unhealthy:
+          interval: 5
+          http_failures: 3
+
+  # FrankenPHP (port 80 internally, exposed as 8081)
+  - id: "upstream-frankenphp"
+    name: "FrankenPHP Runtime"
+    desc: "FrankenPHP HTTP server"
+    type: roundrobin
+    nodes:
+      "test-micro-article-system-frankenphp:80": 1
+    timeout:
+      connect: 5
+      send: 30
+      read: 30
+    retries: 2
+    retry_timeout: 3
+    checks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 5
+          successes: 2
+        unhealthy:
+          interval: 5
+          http_failures: 3
+
+#
+# ============================================================================
+# SERVICES - Logical service groupings
+# ============================================================================
+#
+
+services:
+  # Article API Service (default to FPM, switchable via environment)
+  - id: "service-article-api"
+    name: "Article API"
+    desc: "Article Microservice REST API"
+    upstream_id: "upstream-fpm"
+    plugins:
+      # Add request ID for tracing
+      request-id:
+        header_name: X-Request-Id
+        include_in_response: true
+      # Enable Prometheus metrics
+      prometheus:
+        prefer_name: true
+      # CORS for development
+      cors:
+        allow_origins: "*"
+        allow_methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        allow_headers: "Content-Type, Authorization, X-Request-Id"
+        allow_credential: false
+        max_age: 3600
+
+#
+# ============================================================================
+# ROUTES - URL routing rules
+# ============================================================================
+#
+
+routes:
+  # -------------------------------------------------------------------------
+  # Health Check Endpoints
+  # -------------------------------------------------------------------------
+  - id: "route-health"
+    name: "Health Check"
+    desc: "Application health endpoint"
+    uri: /health
+    methods:
+      - GET
+    service_id: "service-article-api"
+    plugins:
+      # Lightweight - no rate limiting for health checks
+      response-rewrite:
+        headers:
+          set:
+            X-Health-Check: "true"
+
+  # APISIX Gateway Health (direct response using mocking plugin)
+  - id: "route-gateway-health"
+    name: "Gateway Health"
+    desc: "APISIX gateway health check - returns direct response"
+    uri: /apisix/health
+    methods:
+      - GET
+    plugins:
+      mocking:
+        response_status: 200
+        content_type: "application/json"
+        response_example: '{"status":"healthy","gateway":"apisix","version":"3.14.1"}'
+
+  # -------------------------------------------------------------------------
+  # API Version 1 Routes - READ Operations (Public)
+  # -------------------------------------------------------------------------
+  - id: "route-api-v1-article-read"
+    name: "Article API v1 - Read"
+    desc: "Article read operations (API version 1) - Public access"
+    uri: /api/v1/article/*
+    methods:
+      - GET
+    service_id: "service-article-api"
+    plugins:
+      # Rate limiting: 100 requests per second per IP
+      limit-req:
+        rate: 100
+        burst: 50
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      # TASK-027: Circuit breaker for resilience
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 200
+            - 201
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v1"
+            X-Forwarded-By: "apisix"
+
+  # -------------------------------------------------------------------------
+  # API Version 1 Routes - WRITE Operations (JWT Protected)
+  # -------------------------------------------------------------------------
+  - id: "route-api-v1-article-write"
+    name: "Article API v1 - Write"
+    desc: "Article write operations (API version 1) - JWT protected"
+    uri: /api/v1/article/*
+    methods:
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+    service_id: "service-article-api"
+    plugins:
+      # TASK-027: JWT Authentication for write operations
+      jwt-auth:
+        header: Authorization
+        query: jwt
+        cookie: jwt
+      # Rate limiting: 50 requests per second for write operations
+      limit-req:
+        rate: 50
+        burst: 25
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      # TASK-027: Circuit breaker for resilience
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 200
+            - 201
+            - 204
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v1"
+            X-Forwarded-By: "apisix"
+            X-Auth-Required: "true"
+
+  - id: "route-api-v1-article-collection-read"
+    name: "Article Collection v1 - Read"
+    desc: "Article collection list endpoint - Public access"
+    uri: /api/v1/article
+    methods:
+      - GET
+    service_id: "service-article-api"
+    plugins:
+      limit-req:
+        rate: 100
+        burst: 50
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      # TASK-027: Circuit breaker for resilience
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 200
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v1"
+
+  - id: "route-api-v1-article-collection-write"
+    name: "Article Collection v1 - Write"
+    desc: "Article collection create endpoint - JWT protected"
+    uri: /api/v1/article
+    methods:
+      - POST
+    service_id: "service-article-api"
+    plugins:
+      # TASK-027: JWT Authentication for write operations
+      jwt-auth:
+        header: Authorization
+        query: jwt
+        cookie: jwt
+      limit-req:
+        rate: 50
+        burst: 25
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      # TASK-027: Circuit breaker for resilience
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 201
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v1"
+            X-Auth-Required: "true"
+
+  # -------------------------------------------------------------------------
+  # Identity Module - User Routes (Public read, JWT for write)
+  # -------------------------------------------------------------------------
+  - id: "route-api-v1-users-read"
+    name: "Users API v1 - Read"
+    desc: "User read operations - Public access"
+    uri: /api/v1/users/*
+    methods:
+      - GET
+    service_id: "service-article-api"
+    plugins:
+      limit-req:
+        rate: 100
+        burst: 50
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 200
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v1"
+
+  - id: "route-api-v1-users-write"
+    name: "Users API v1 - Write"
+    desc: "User write operations - Public registration, JWT for updates"
+    uri: /api/v1/users/*
+    methods:
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+    service_id: "service-article-api"
+    plugins:
+      limit-req:
+        rate: 50
+        burst: 25
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 200
+            - 201
+            - 204
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v1"
+
+  - id: "route-api-v1-users-collection-read"
+    name: "Users Collection v1 - Read"
+    desc: "User list endpoint - Public access"
+    uri: /api/v1/users
+    methods:
+      - GET
+    service_id: "service-article-api"
+    plugins:
+      limit-req:
+        rate: 100
+        burst: 50
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      proxy-rewrite:
+        uri: "/api/v1/users/"
+        headers:
+          add:
+            X-API-Version: "v1"
+
+  - id: "route-api-v1-users-collection-write"
+    name: "Users Collection v1 - Write"
+    desc: "User registration endpoint - Public"
+    uri: /api/v1/users
+    methods:
+      - POST
+    service_id: "service-article-api"
+    plugins:
+      limit-req:
+        rate: 20
+        burst: 10
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      proxy-rewrite:
+        uri: "/api/v1/users/"
+        headers:
+          add:
+            X-API-Version: "v1"
+
+  # -------------------------------------------------------------------------
+  # Identity Module - JWT Auth Routes
+  # -------------------------------------------------------------------------
+  - id: "route-api-v1-jwt-read"
+    name: "JWT API v1 - Read"
+    desc: "JWT token read operations"
+    uri: /api/v1/auth/jwt/*
+    methods:
+      - GET
+    service_id: "service-article-api"
+    plugins:
+      limit-req:
+        rate: 100
+        burst: 50
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      proxy-rewrite:
+        regex_uri:
+          - "^/api/v1/auth/jwt/(.*)"
+          - "/api/v1/jwt/$1"
+        headers:
+          add:
+            X-API-Version: "v1"
+
+  - id: "route-api-v1-jwt-write"
+    name: "JWT API v1 - Write"
+    desc: "JWT token operations (issue, revoke, refresh)"
+    uri: /api/v1/auth/jwt/*
+    methods:
+      - POST
+      - DELETE
+    service_id: "service-article-api"
+    plugins:
+      limit-req:
+        rate: 30
+        burst: 15
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      proxy-rewrite:
+        regex_uri:
+          - "^/api/v1/auth/jwt/(.*)"
+          - "/api/v1/jwt/$1"
+        headers:
+          add:
+            X-API-Version: "v1"
+
+  - id: "route-api-v1-jwt-collection"
+    name: "JWT Collection v1"
+    desc: "JWT token collection endpoint"
+    uri: /api/v1/auth/jwt/tokens
+    methods:
+      - GET
+      - POST
+    service_id: "service-article-api"
+    plugins:
+      limit-req:
+        rate: 50
+        burst: 25
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      proxy-rewrite:
+        uri: "/api/v1/jwt/tokens"
+        headers:
+          add:
+            X-API-Version: "v1"
+
+  # -------------------------------------------------------------------------
+  # API Version 2 Routes - READ Operations (Public)
+  # -------------------------------------------------------------------------
+  - id: "route-api-v2-article-read"
+    name: "Article API v2 - Read"
+    desc: "Article read operations (API version 2) - Public access"
+    uri: /api/v2/article/*
+    methods:
+      - GET
+    service_id: "service-article-api"
+    plugins:
+      # Rate limiting: 200 requests per second (v2 has higher limits)
+      limit-req:
+        rate: 200
+        burst: 100
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      # TASK-027: Circuit breaker for resilience
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 200
+            - 201
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v2"
+            X-Forwarded-By: "apisix"
+
+  # -------------------------------------------------------------------------
+  # API Version 2 Routes - WRITE Operations (JWT Protected)
+  # -------------------------------------------------------------------------
+  - id: "route-api-v2-article-write"
+    name: "Article API v2 - Write"
+    desc: "Article write operations (API version 2) - JWT protected"
+    uri: /api/v2/article/*
+    methods:
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+    service_id: "service-article-api"
+    plugins:
+      # TASK-027: JWT Authentication for write operations
+      jwt-auth:
+        header: Authorization
+        query: jwt
+        cookie: jwt
+      # Rate limiting: 100 requests per second for write operations (v2)
+      limit-req:
+        rate: 100
+        burst: 50
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      # TASK-027: Circuit breaker for resilience
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 200
+            - 201
+            - 204
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v2"
+            X-Forwarded-By: "apisix"
+            X-Auth-Required: "true"
+
+  - id: "route-api-v2-article-collection-read"
+    name: "Article Collection v2 - Read"
+    desc: "Article collection list endpoint v2 - Public access"
+    uri: /api/v2/article
+    methods:
+      - GET
+    service_id: "service-article-api"
+    plugins:
+      limit-req:
+        rate: 200
+        burst: 100
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      # TASK-027: Circuit breaker for resilience
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 200
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v2"
+
+  - id: "route-api-v2-article-collection-write"
+    name: "Article Collection v2 - Write"
+    desc: "Article collection create endpoint v2 - JWT protected"
+    uri: /api/v2/article
+    methods:
+      - POST
+    service_id: "service-article-api"
+    plugins:
+      # TASK-027: JWT Authentication for write operations
+      jwt-auth:
+        header: Authorization
+        query: jwt
+        cookie: jwt
+      limit-req:
+        rate: 100
+        burst: 50
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      # TASK-027: Circuit breaker for resilience
+      api-breaker:
+        break_response_code: 503
+        max_breaker_sec: 30
+        unhealthy:
+          http_statuses:
+            - 500
+            - 502
+            - 503
+          failures: 3
+        healthy:
+          http_statuses:
+            - 201
+          successes: 2
+      proxy-rewrite:
+        headers:
+          add:
+            X-API-Version: "v2"
+            X-Auth-Required: "true"
+
+  # -------------------------------------------------------------------------
+  # Observability Endpoints
+  # -------------------------------------------------------------------------
+  - id: "route-metrics"
+    name: "Prometheus Metrics"
+    desc: "Application metrics for Prometheus"
+    uri: /metrics
+    methods:
+      - GET
+    service_id: "service-article-api"
+    plugins:
+      # IP restriction - only allow internal/monitoring IPs
+      ip-restriction:
+        whitelist:
+          - 172.16.0.0/12    # Docker internal networks
+          - 10.0.0.0/8       # Private networks
+          - 192.168.0.0/16   # Local networks
+          - 127.0.0.1/32     # Localhost
+        message: "Access denied to metrics endpoint"
+
+  # -------------------------------------------------------------------------
+  # Catch-all for other static assets
+  # -------------------------------------------------------------------------
+  - id: "route-static"
+    name: "Static Assets"
+    desc: "Static files and assets"
+    uri: /*
+    methods:
+      - GET
+    priority: -1  # Lower priority than specific routes
+    service_id: "service-article-api"
+
+#
+# ============================================================================
+# GLOBAL RULES - Apply to all routes
+# ============================================================================
+#
+
+global_rules:
+  - id: "global-observability"
+    plugins:
+      # Add unique request ID to all requests
+      request-id:
+        header_name: X-Request-Id
+        include_in_response: true
+        algorithm: uuid
+      # Prometheus metrics for all requests
+      prometheus:
+        prefer_name: true
+      # TASK-036: OpenTelemetry tracing for all routes
+      opentelemetry:
+        sampler:
+          name: always_on
+
+#
+# ============================================================================
+# CONSUMERS - API consumers with authentication
+# ============================================================================
+#
+# TASK-027: JWT Authentication for Article API
+consumers:
+  - username: "article-api-service"
+    desc: "Article API Service Consumer for authenticated operations"
+    plugins:
+      jwt-auth:
+        # Consumer key identifier
+        key: "article-api-key"
+        # RS256 algorithm for production security
+        algorithm: "RS256"
+        # Public key for token verification
+        public_key: |
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwOJoen8eNjhcAagJWaeq
+          OJCHSM8bV131wi1guMFflqwss3ub0WMAuVyq3gLMXpjRG/2tK+fJn+BydJASB2qV
+          Q10uHCl1QcL4H9dX0kMqfMhISzIur/ei6zVWDAGdOz/EnlkiPeD4siXqdNH3b8G9
+          nT21KHG0mecApa9PqQFdak7ycnYsEvzOeJKheyffL+n/3rHGuMwJQbpQrRo1kJAV
+          dL7lXpm5qT12bW8TkO8CthPLTHXrS7n4aZymZPiVjA+HcABP98ycKSW5JbxTTggT
+          wR1cfy4Ml7R8U4zHv33wyD+N2yXsHvC1/O5Ckj6Sb5c/88skzYfMG30Xj2Ra7leD
+          xwIDAQAB
+          -----END PUBLIC KEY-----
+        # Token expiration: 24 hours (86400 seconds)
+        exp: 86400
+        # Base64 secret for HS256 fallback (not used with RS256)
+        base64_secret: false
+
+# NOTE: plugin_metadata is NOT used in standalone mode (role: data_plane)
+# OpenTelemetry configuration is in plugin_attr section of config.yaml
+# See GitHub Issue #11368 for details
+
+#
+# ============================================================================
+# PROTOS - gRPC Protocol Buffer definitions for transcoding
+# ============================================================================
+#
+# TASK-027: gRPC Transcoding - Enables REST to gRPC translation
+
+protos:
+  - id: "proto-article-v1"
+    desc: "Article API v1 gRPC Service Definition"
+    content: |
+      syntax = "proto3";
+      package micro.article.v1;
+
+      message Article {
+        string id = 1;
+        string title = 2;
+        string slug = 3;
+        string body = 4;
+        string status = 5;
+        string category = 6;
+        repeated string tags = 7;
+        string author_id = 8;
+        string created_at = 9;
+        string updated_at = 10;
+        string published_at = 11;
+      }
+
+      message PaginationRequest {
+        int32 page = 1;
+        int32 per_page = 2;
+      }
+
+      message PaginationResponse {
+        int32 current_page = 1;
+        int32 per_page = 2;
+        int32 total_items = 3;
+        int32 total_pages = 4;
+      }
+
+      message CreateArticleRequest {
+        string title = 1;
+        string body = 2;
+        string category = 3;
+        repeated string tags = 4;
+        string author_id = 5;
+      }
+
+      message CreateArticleResponse {
+        string id = 1;
+        string message = 2;
+        Article article = 3;
+      }
+
+      message GetArticleRequest {
+        string id = 1;
+      }
+
+      message GetArticleResponse {
+        Article article = 1;
+      }
+
+      message ListArticleRequest {
+        PaginationRequest pagination = 1;
+        string status = 2;
+        string category = 3;
+        string author_id = 4;
+        string search = 5;
+      }
+
+      message ListArticleResponse {
+        repeated Article items = 1;
+        PaginationResponse pagination = 2;
+      }
+
+      message UpdateArticleRequest {
+        string id = 1;
+        string title = 2;
+        string body = 3;
+        string category = 4;
+        repeated string tags = 5;
+      }
+
+      message UpdateArticleResponse {
+        string message = 1;
+        Article article = 2;
+      }
+
+      message PublishArticleRequest {
+        string id = 1;
+      }
+
+      message PublishArticleResponse {
+        string message = 1;
+        Article article = 2;
+      }
+
+      message UnpublishArticleRequest {
+        string id = 1;
+      }
+
+      message UnpublishArticleResponse {
+        string message = 1;
+        Article article = 2;
+      }
+
+      message ArchiveArticleRequest {
+        string id = 1;
+      }
+
+      message ArchiveArticleResponse {
+        string message = 1;
+        Article article = 2;
+      }
+
+      message DeleteArticleRequest {
+        string id = 1;
+      }
+
+      message DeleteArticleResponse {
+        string message = 1;
+      }
+
+      service ArticleService {
+        rpc CreateArticle(CreateArticleRequest) returns (CreateArticleResponse);
+        rpc GetArticle(GetArticleRequest) returns (GetArticleResponse);
+        rpc ListArticle(ListArticleRequest) returns (ListArticleResponse);
+        rpc UpdateArticle(UpdateArticleRequest) returns (UpdateArticleResponse);
+        rpc PublishArticle(PublishArticleRequest) returns (PublishArticleResponse);
+        rpc UnpublishArticle(UnpublishArticleRequest) returns (UnpublishArticleResponse);
+        rpc ArchiveArticle(ArchiveArticleRequest) returns (ArchiveArticleResponse);
+        rpc DeleteArticle(DeleteArticleRequest) returns (DeleteArticleResponse);
+      }
+
+#
+# ============================================================================
+# gRPC TRANSCODING ROUTES - REST to gRPC translation
+# ============================================================================
+#
+# These routes enable gRPC-style access patterns via REST endpoints.
+# The grpc-transcode plugin translates JSON to Protocol Buffers.
+#
+# Note: These routes are OPTIONAL and supplement the existing REST routes.
+# Use /grpc/v1/article/* for gRPC transcoding endpoints.
+
+  # Route already defined in main routes section above.
+  # gRPC Transcoding is available as an alternative access pattern.
+  #
+  # To enable full gRPC transcoding:
+  # 1. Deploy a gRPC backend (e.g., RoadRunner with gRPC plugin)
+  # 2. Add upstream pointing to gRPC server (port 9001)
+  # 3. Configure grpc-transcode plugin on routes
+  #
+  # Example grpc-transcode route (commented - requires gRPC backend):
+  # - id: "route-grpc-article-get"
+  #   name: "gRPC Get Article"
+  #   uri: /grpc/v1/article/:id
+  #   methods: [GET]
+  #   upstream_id: "upstream-grpc"
+  #   plugins:
+  #     grpc-transcode:
+  #       proto_id: "proto-article-v1"
+  #       service: "micro.article.v1.ArticleService"
+  #       method: "GetArticle"
+
+# APISIX Standalone Mode - Required end marker
+#END

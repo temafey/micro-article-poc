@@ -1,0 +1,131 @@
+###> symfony/framework-bundle ###
+.env.local
+.env.local.php
+.env.*.local
+.env.dist
+.mcp.json
+.claude/
+CLAUDE.md
+
+var/cache/*
+!var/cache/.gitkeep
+var/fixture/*
+!var/fixture/.gitkeep
+var/log/*
+!var/log/.gitkeep
+var/storage/read/*
+!var/storage/read/.gitkeep
+var/storage/write/*
+!var/storage/write/.gitkeep
+postmortem/*
+!postmortem/.gitkeep
+.phpunit.cache/*
+
+vendor/
+###< symfony/framework-bundle ###
+
+###> PhpStorm project profile ###
+.idea/
+###< PhpStorm project profile ###
+
+###> phpunit/phpunit ###
+phpunit.xml
+###< phpunit/phpunit ###
+
+###> friendsofphp/php-cs-fixer ###
+.php_cs.cache
+###< friendsofphp/php-cs-fixer ###
+
+###> squizlabs/php_codesniffer ###
+.phpcs-cache
+phpcs.xml
+###< squizlabs/php_codesniffer ###
+
+###> sensiolabs-de/deptrac ###
+.deptrac.cache
+###< sensiolabs-de/deptrac ###
+
+# Build data
+build/
+
+###> Phpunit ###
+bin/.phpunit
+phpunit.result.cache
+.phpunit.result.cache
+infection/
+###< Phpunit ###
+adapter_program_response.json
+
+###> sensiolabs-de/deptrac-shim ###
+/.deptrac.cache
+###< sensiolabs-de/deptrac-shim ###
+
+###> symfony/phpunit-bridge ###
+.phpunit
+.phpunit.result.cache
+/phpunit.xml
+###< symfony/phpunit-bridge ###
+
+###> vim ###
+.backup
+*.swp
+*.bak
+*.tmp
+###< vim ###
+
+public/bundles
+*.tgz
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###
+
+.taskmaster
+migrations
+
+generator.php
+generator_task.php
+V4_FEATURES_GUIDE.md
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+.env
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+.DS_Store
+
+# Task files
+# tasks.json
+# tasks/
+
+###> deptrac/deptrac ###
+/.deptrac.cache
+###< deptrac/deptrac ###
+
+###> Code coverage ###
+var/coverage/
+var/infection/
+###< Code coverage ###
+
+###> baldinof/roadrunner-bundle ###
+/bin/rr
+###< baldinof/roadrunner-bundle ###
+
+###> APISIX JWT Keys ###
+apisix/jwt-keys/private.pem
+###< APISIX JWT Keys ###

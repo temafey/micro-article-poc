@@ -1,0 +1,9 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: false
+    public: false
+
+  # TracerMiddleware services removed - tracing is now handled by
+  # OpenTelemetryCommandMiddleware in config/packages/observability.yaml
+  # which provides OpenTelemetry semantic conventions for command bus tracing.
