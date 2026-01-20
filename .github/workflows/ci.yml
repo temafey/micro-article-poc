@@ -71,7 +71,13 @@ jobs:
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
         env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          APP_DATABASE_HOST: localhost
+          APP_DATABASE_PORT: 5432
+          APP_DATABASE_NAME: test_db
+          APP_DATABASE_ROOT_LOGIN: test_user
+          APP_DATABASE_ROOT_PASSWORD: test_password
+          APP_DATABASE_SERVICE_LOGIN: test_user
+          APP_DATABASE_SERVICE_PASSWORD: test_password
           REDIS_URL: redis://localhost:6379
 
       - name: Upload coverage to Codecov
