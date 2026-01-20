@@ -124,8 +124,7 @@
         },
         "files": [
             "bootstrap/const.php",
-            "bootstrap/helper.php",
-            "polyfill/CommandFactoryInterface.php"
+            "bootstrap/helper.php"
         ]
     },
     "autoload-dev": {
