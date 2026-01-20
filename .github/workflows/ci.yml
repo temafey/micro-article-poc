@@ -63,6 +63,11 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress --ignore-platform-req=ext-opentelemetry
 
+      - name: Create .env file for tests
+        run: |
+          cp .env.test .env
+          echo "APP_ENV=test" >> .env
+
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
         env:
