@@ -1,17 +1,17 @@
 api_v1_article:
     resource:
-        path: '%kernel.project_dir%/src/Article/Presentation/Rest/V1/'
+        path: ../../../src/Article/Presentation/Rest/V1/
         namespace: Micro\Article\Presentation\Rest\V1
     type: attribute
     prefix: /api/v1/article
 
 api_v2_article:
     resource:
-        path: '%kernel.project_dir%/src/Article/Presentation/Rest/V2/'
+        path: ../../../src/Article/Presentation/Rest/V2/
         namespace: Micro\Article\Presentation\Rest\V2
     type: attribute
     prefix: /api/v2/article
 
 custom_api_documentation_article:
-    resource: '%kernel.project_dir%/src/Common/Presentation/Rest/ApiDocController.php'
+    resource: ../../../src/Common/Presentation/Rest/ApiDocController.php
     type: attribute
