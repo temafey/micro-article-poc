@@ -76,6 +76,11 @@ jobs:
           APP_DATABASE_ROOT_PASSWORD: postgres
           APP_REDIS_HOST: localhost
           APP_REDIS_PORT: 6379
+          OTEL_CIRCUIT_BREAKER_ENABLED: false
+          OTEL_CB_TIME_WINDOW: 30
+          OTEL_CB_FAILURE_RATE: 50
+          OTEL_CB_MIN_REQUESTS: 3
+          OTEL_CB_HALF_OPEN_INTERVAL: 10
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
@@ -87,6 +92,11 @@ jobs:
           APP_DATABASE_SERVICE_PASSWORD: postgres
           APP_REDIS_HOST: localhost
           APP_REDIS_PORT: 6379
+          OTEL_CIRCUIT_BREAKER_ENABLED: false
+          OTEL_CB_TIME_WINDOW: 30
+          OTEL_CB_FAILURE_RATE: 50
+          OTEL_CB_MIN_REQUESTS: 3
+          OTEL_CB_HALF_OPEN_INTERVAL: 10
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
