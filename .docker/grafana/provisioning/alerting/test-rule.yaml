@@ -1,0 +1,28 @@
+# Minimal test alert rule for debugging
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: test-group
+    folder: infrastructure
+    interval: 1m
+    rules:
+      - uid: test-alert-minimal
+        title: Test Alert Minimal
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: vector(1)
+        noDataState: NoData
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: Test alert for debugging
+        labels:
+          severity: info

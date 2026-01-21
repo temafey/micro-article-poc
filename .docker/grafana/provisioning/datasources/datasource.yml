@@ -1,0 +1,85 @@
+# =============================================================================
+# Grafana Datasources Configuration (TASK-037: Alerting & Profiling)
+# =============================================================================
+# Matches otel-lgtm built-in datasource format for compatibility.
+# Internal services use 127.0.0.1 (loopback) within the container.
+#
+# Components:
+#   - Prometheus/Mimir: Metrics (port 9090)
+#   - Tempo: Traces (port 3200)
+#   - Loki: Logs (port 3100)
+#   - Pyroscope: Profiles (port 4040)
+#
+# Related: ADR-014-observability-stack-modernization.md
+#          docker-compose.observability-dev.yml
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  # Prometheus/Mimir - Metrics backend
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://127.0.0.1:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 60s
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+          urlDisplayLabel: "Trace: ${__value.raw}"
+
+  # Tempo - Distributed tracing backend
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    url: http://127.0.0.1:3200
+    editable: true
+    jsonData:
+      tracesToLogsV2:
+        customQuery: true
+        datasourceUid: loki
+        # JSON log format query: parse JSON then filter by trace_id from extra field
+        query: '{${__tags}} | json | extra_trace_id = `${__trace.traceId}`'
+      tracesToProfiles:
+        datasourceUid: pyroscope
+        tags:
+          - key: service.name
+            value: service_name
+        profileTypeId: process_cpu:cpu:nanoseconds:cpu:nanoseconds
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+      lokiSearch:
+        datasourceUid: loki
+
+  # Loki - Log aggregation backend
+  - name: Loki
+    type: loki
+    uid: loki
+    url: http://127.0.0.1:3100
+    editable: true
+    jsonData:
+      derivedFields:
+        # Match JSON format: "trace_id":"abc123..." (Monolog JsonFormatter)
+        - datasourceUid: tempo
+          matcherRegex: '"trace_id"\\s*:\\s*"([a-f0-9]{32})"'
+          name: TraceID
+          url: "${__value.raw}"
+        # Match JSON format: "span_id":"abc123..." (for span correlation)
+        - datasourceUid: tempo
+          matcherRegex: '"span_id"\\s*:\\s*"([a-f0-9]{16})"'
+          name: SpanID
+          url: "${__value.raw}"
+
+  # Pyroscope - Continuous profiling backend
+  # NOTE: Pyroscope runs as SEPARATE container, not inside otel-lgtm
+  # Must use Docker network hostname, not loopback
+  - name: Pyroscope
+    type: grafana-pyroscope-datasource
+    uid: pyroscope
+    url: http://pyroscope:4040
+    editable: true

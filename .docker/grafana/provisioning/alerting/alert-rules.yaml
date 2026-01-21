@@ -1,0 +1,575 @@
+# =============================================================================
+# Grafana Alert Rules (TASK-037: Alerting & Profiling)
+# =============================================================================
+# Unified alerting rules for infrastructure and application monitoring.
+# Alerts are defined using PromQL queries against Mimir metrics.
+#
+# Related: ADR-014-observability-stack-modernization.md
+#          docker-compose.observability-dev.yml
+# =============================================================================
+
+apiVersion: 1
+
+groups:
+  # ===========================================================================
+  # Infrastructure Alerts
+  # ===========================================================================
+  - orgId: 1
+    name: infrastructure-postgresql
+    folder: infrastructure
+    interval: 1m
+    rules:
+      # PostgreSQL Connection Pool
+      - uid: pg-connections-high
+        title: PostgreSQL Connections High
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: pg_stat_activity_count{datname="news"} / pg_settings_max_connections > 0.8
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0.8
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: PostgreSQL connection usage exceeds 80% of maximum
+          description: "Database {{ $labels.instance }} has {{ $value | printf \"%.1f\" }}% connections in use"
+          runbook_url: https://github.com/example/docs/operations/runbooks/database-connections.md
+        labels:
+          severity: warning
+          team: platform
+          component: database
+
+      # PostgreSQL Slow Queries
+      - uid: pg-slow-queries
+        title: PostgreSQL Slow Queries Detected
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: rate(pg_stat_statements_seconds_total[5m]) > 1
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: PostgreSQL queries taking longer than 1 second
+          description: "Slow query detected on {{ $labels.instance }}"
+          runbook_url: https://github.com/example/docs/operations/runbooks/database-connections.md
+        labels:
+          severity: warning
+          team: platform
+          component: database
+
+  - orgId: 1
+    name: infrastructure-redis
+    folder: infrastructure
+    interval: 1m
+    rules:
+      # Redis Memory Usage
+      - uid: redis-memory-high
+        title: Redis Memory High
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.8]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: Redis memory usage exceeds 80% of maximum
+          description: "Redis {{ $labels.instance }} memory at {{ $value | printf \"%.1f\" }}%"
+          runbook_url: https://github.com/example/docs/operations/runbooks/memory-pressure.md
+        labels:
+          severity: warning
+          team: platform
+          component: cache
+
+      # Redis Connection Issues
+      - uid: redis-connections-rejected
+        title: Redis Connections Rejected
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: rate(redis_rejected_connections_total[5m]) > 0
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: Redis is rejecting connections
+          description: "Redis {{ $labels.instance }} rejecting {{ $value }} connections/sec"
+          runbook_url: https://github.com/example/docs/operations/runbooks/memory-pressure.md
+        labels:
+          severity: critical
+          team: platform
+          component: cache
+
+  - orgId: 1
+    name: infrastructure-rabbitmq
+    folder: infrastructure
+    interval: 1m
+    rules:
+      # RabbitMQ Queue Depth
+      - uid: rabbitmq-queue-depth-high
+        title: RabbitMQ Queue Depth High
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: rabbitmq_queue_messages_ready > 1000
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1000]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: RabbitMQ queue has high message backlog
+          description: "Queue {{ $labels.queue }} on {{ $labels.instance }} has {{ $value }} messages pending"
+          runbook_url: https://github.com/example/docs/operations/runbooks/event-processing-lag.md
+        labels:
+          severity: warning
+          team: platform
+          component: messaging
+
+      # RabbitMQ Consumer Down
+      - uid: rabbitmq-no-consumers
+        title: RabbitMQ Queue Has No Consumers
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: rabbitmq_queue_consumers == 0 and rabbitmq_queue_messages_ready > 0
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: RabbitMQ queue has no active consumers
+          description: "Queue {{ $labels.queue }} has messages but no consumers"
+          runbook_url: https://github.com/example/docs/operations/runbooks/event-processing-lag.md
+        labels:
+          severity: critical
+          team: platform
+          component: messaging
+
+  # ===========================================================================
+  # Application Alerts
+  # ===========================================================================
+  - orgId: 1
+    name: application-performance
+    folder: application
+    interval: 1m
+    rules:
+      # High Error Rate
+      - uid: app-high-error-rate
+        title: High Error Rate (5xx)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: |
+                sum(rate(http_server_requests_total{status=~"5.."}[5m]))
+                /
+                sum(rate(http_server_requests_total[5m])) > 0.01
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.01]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: Application error rate exceeds 1%
+          description: "Service {{ $labels.service_name }} error rate: {{ $value | printf \"%.2f\" }}%"
+          runbook_url: https://github.com/example/docs/operations/runbooks/high-error-rate.md
+        labels:
+          severity: critical
+          team: application
+          component: api
+
+      # High Latency P95
+      - uid: app-high-latency-p95
+        title: High Latency (p95 > 200ms)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: |
+                histogram_quantile(0.95,
+                  sum(rate(http_server_request_duration_seconds_bucket[5m])) by (le)
+                ) > 0.2
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.2]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: API latency p95 exceeds 200ms
+          description: "Service {{ $labels.service_name }} p95 latency: {{ $value | printf \"%.3f\" }}s"
+          runbook_url: https://github.com/example/docs/operations/runbooks/high-latency.md
+        labels:
+          severity: warning
+          team: application
+          component: api
+
+      # High Latency P99
+      - uid: app-high-latency-p99
+        title: High Latency (p99 > 500ms)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: |
+                histogram_quantile(0.99,
+                  sum(rate(http_server_request_duration_seconds_bucket[5m])) by (le)
+                ) > 0.5
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.5]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: API latency p99 exceeds 500ms
+          description: "Service {{ $labels.service_name }} p99 latency: {{ $value | printf \"%.3f\" }}s"
+          runbook_url: https://github.com/example/docs/operations/runbooks/high-latency.md
+        labels:
+          severity: critical
+          team: application
+          component: api
+
+  - orgId: 1
+    name: application-event-sourcing
+    folder: application
+    interval: 1m
+    rules:
+      # Event Store Write Failures
+      - uid: es-write-failures
+        title: Event Store Write Failures
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: rate(event_store_write_failures_total[5m]) > 0
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: Event store experiencing write failures
+          description: "Event store write failures: {{ $value }}/sec"
+          runbook_url: https://github.com/example/docs/operations/runbooks/high-error-rate.md
+        labels:
+          severity: critical
+          team: application
+          component: event-sourcing
+
+      # Projection Lag
+      - uid: es-projection-lag
+        title: Event Projection Lag High
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: event_projection_lag_seconds > 30
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [30]
+                    type: gt
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: Event projection lag exceeds 30 seconds
+          description: "Projector {{ $labels.projector }} lag: {{ $value | printf \"%.1f\" }}s"
+          runbook_url: https://github.com/example/docs/operations/runbooks/event-processing-lag.md
+        labels:
+          severity: warning
+          team: application
+          component: event-sourcing

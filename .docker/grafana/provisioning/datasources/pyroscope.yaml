@@ -1,0 +1,23 @@
+# =============================================================================
+# Pyroscope Data Source Configuration (TASK-037: Alerting & Profiling)
+# =============================================================================
+# Continuous profiling data source for Grafana
+# Enables visualization of CPU, memory, and allocation profiles
+#
+# Related: ADR-014-observability-stack-modernization.md
+#          docker-compose.observability-dev.yml
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  - name: Pyroscope
+    type: grafana-pyroscope-datasource
+    uid: pyroscope
+    url: http://pyroscope:4040
+    access: proxy
+    isDefault: false
+    jsonData:
+      # Minimum query step for profile data
+      minStep: '15s'
+    editable: true

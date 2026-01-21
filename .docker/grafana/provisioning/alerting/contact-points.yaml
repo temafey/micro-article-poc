@@ -1,0 +1,97 @@
+# =============================================================================
+# Grafana Contact Points (TASK-037: Alerting & Profiling)
+# =============================================================================
+# Notification destinations for alert delivery.
+# Contact points define where alerts are sent (webhook, email, Slack, etc.)
+#
+# Related: ADR-014-observability-stack-modernization.md
+#          docker-compose.observability-dev.yml
+# =============================================================================
+
+apiVersion: 1
+
+contactPoints:
+  # ===========================================================================
+  # Primary Contact Points
+  # ===========================================================================
+
+  # Webhook for integration with incident management systems
+  # (PagerDuty, OpsGenie, custom alertmanager, etc.)
+  - orgId: 1
+    name: ops-webhook
+    receivers:
+      - uid: ops-webhook-receiver
+        type: webhook
+        settings:
+          url: "http://localhost:9999/alerts"
+          httpMethod: POST
+          username: ""
+          password: ""
+          authorization_scheme: ""
+          authorization_credentials: ""
+          maxAlerts: 0
+        disableResolveMessage: false
+
+  # Email notification for critical alerts
+  # Requires SMTP configuration in Grafana
+  - orgId: 1
+    name: ops-email
+    receivers:
+      - uid: ops-email-receiver
+        type: email
+        settings:
+          addresses: "ops@example.com"
+          singleEmail: false
+          message: |
+            Alert: {{ .CommonLabels.alertname }}
+            Severity: {{ .CommonLabels.severity }}
+
+            Summary: {{ .CommonAnnotations.summary }}
+            Description: {{ .CommonAnnotations.description }}
+
+            Runbook: {{ .CommonAnnotations.runbook_url }}
+        disableResolveMessage: false
+
+  # ===========================================================================
+  # Team-Specific Contact Points
+  # ===========================================================================
+
+  # Platform team notifications (infrastructure alerts)
+  - orgId: 1
+    name: platform-team
+    receivers:
+      - uid: platform-webhook-receiver
+        type: webhook
+        settings:
+          url: "http://localhost:9999/platform"
+          httpMethod: POST
+        disableResolveMessage: false
+
+  # Application team notifications (application-level alerts)
+  - orgId: 1
+    name: application-team
+    receivers:
+      - uid: application-webhook-receiver
+        type: webhook
+        settings:
+          url: "http://localhost:9999/application"
+          httpMethod: POST
+        disableResolveMessage: false
+
+  # ===========================================================================
+  # Development Contact Points (for testing)
+  # ===========================================================================
+
+  # Console/Log output for development (no external dependencies)
+  - orgId: 1
+    name: dev-console
+    receivers:
+      - uid: dev-console-receiver
+        type: webhook
+        settings:
+          # In development, alerts are logged to Grafana's log output
+          # Set this to your local webhook receiver for testing
+          url: "http://localhost:9999/dev-alerts"
+          httpMethod: POST
+        disableResolveMessage: false
+
