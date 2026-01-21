@@ -161,11 +161,13 @@ final class ArticleRepositoryTest extends IntegrationTestCase
         // Act
         $this->repository->save($entity);
 
-        // Assert - verify events are stored in the database
-        $eventStore = $this->getService(DBALEventStore::class);
-        $eventStream = $eventStore->load($entity->getAggregateRootId());
-        $events = iterator_to_array($eventStream);
-        $this->assertNotEmpty($events);
+        // Assert - verify events are stored by loading the entity back
+        // This ensures the event sourcing repository can reconstruct the aggregate from stored events
+        $loadedEntity = $this->repository->load($entity->getAggregateRootId());
+        $this->assertInstanceOf(ArticleEntity::class, $loadedEntity);
+        $this->assertEquals($entity->getAggregateRootId(), $loadedEntity->getAggregateRootId());
+        // Verify the entity state was reconstructed from events
+        $this->assertEquals($articleData['title'], $loadedEntity->getTitle()->toNative());
     }
 
     #[Test]

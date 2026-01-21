@@ -15,6 +15,7 @@ use Micro\Component\Common\Domain\Outbox\OutboxMessageType;
 use Micro\Component\Common\Domain\Outbox\OutboxRepositoryInterface;
 use Micro\Component\Common\Infrastructure\Outbox\BroadwayDomainEventSerializer;
 use Micro\Component\Common\Infrastructure\Outbox\DbalOutboxRepository;
+use Micro\Component\Common\Infrastructure\Outbox\Metrics\OutboxMetricsInterface;
 use Micro\Component\Common\Infrastructure\Outbox\OutboxAwareEventStore;
 use Mockery;
 use Mockery\MockInterface;
@@ -69,11 +70,18 @@ final class OutboxAwareEventStoreIntegrationTest extends IntegrationTestCase
             $metadataSerializer,
         );
 
+        // Create mock metrics
+        $metrics = Mockery::mock(OutboxMetricsInterface::class);
+        $metrics->shouldReceive('recordEventStored')->andReturnNull()->byDefault();
+        $metrics->shouldReceive('recordOutboxCreation')->andReturnNull()->byDefault();
+        $metrics->shouldReceive('recordMessageEnqueued')->andReturnNull()->byDefault();
+
         // Create the decorator under test
         $this->decorator = new OutboxAwareEventStore(
             $this->innerEventStore,
             $this->outboxRepository,
             $this->serializer,
+            $metrics,
             new NullLogger(),
         );
 

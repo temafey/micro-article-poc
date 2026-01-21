@@ -11,6 +11,7 @@ use Broadway\Domain\Metadata;
 use Broadway\EventStore\EventStore;
 use Micro\Component\Common\Domain\Outbox\DomainEventSerializerInterface;
 use Micro\Component\Common\Domain\Outbox\OutboxRepositoryInterface;
+use Micro\Component\Common\Infrastructure\Outbox\Metrics\OutboxMetricsInterface;
 use Micro\Component\Common\Infrastructure\Outbox\OutboxAwareEventStore;
 use Micro\Component\Common\Infrastructure\Outbox\OutboxEntry;
 use Mockery;
@@ -35,6 +36,7 @@ final class OutboxAwareEventStoreTest extends TestCase
     private EventStore&MockInterface $innerStore;
     private OutboxRepositoryInterface&MockInterface $outboxRepository;
     private DomainEventSerializerInterface&MockInterface $serializer;
+    private OutboxMetricsInterface&MockInterface $metrics;
     private LoggerInterface&MockInterface $logger;
     private OutboxAwareEventStore $eventStore;
 
@@ -45,12 +47,24 @@ final class OutboxAwareEventStoreTest extends TestCase
         $this->innerStore = Mockery::mock(EventStore::class);
         $this->outboxRepository = Mockery::mock(OutboxRepositoryInterface::class);
         $this->serializer = Mockery::mock(DomainEventSerializerInterface::class);
+
+        // Metrics mock with lenient expectations
+        $this->metrics = Mockery::mock(OutboxMetricsInterface::class);
+        $this->metrics->shouldReceive('recordEventStored')->andReturnNull()->byDefault();
+        $this->metrics->shouldReceive('recordOutboxCreation')->andReturnNull()->byDefault();
+        $this->metrics->shouldReceive('recordMessageEnqueued')->andReturnNull()->byDefault();
+
+        // Logger mock with lenient expectations
         $this->logger = Mockery::mock(LoggerInterface::class);
+        $this->logger->shouldReceive('info')->andReturnNull()->byDefault();
+        $this->logger->shouldReceive('warning')->andReturnNull()->byDefault();
+        $this->logger->shouldReceive('error')->andReturnNull()->byDefault();
 
         $this->eventStore = new OutboxAwareEventStore(
             $this->innerStore,
             $this->outboxRepository,
             $this->serializer,
+            $this->metrics,
             $this->logger,
         );
     }

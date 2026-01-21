@@ -1151,10 +1151,10 @@ Set breakpoints in your code, then:
 
 ```bash
 # Run PHPUnit with debugging (auto-starts Xdebug)
-make cli-test tests/Unit/Article/Domain/ValueObject/TitleTest.php
+make test-unit tests/Unit/Article/Domain/ValueObject/TitleTest.php
 
 # Run specific test method
-make cli-test --filter testConstructWithValidValue tests/Unit/Article/Domain/ValueObject/TitleTest.php
+make test-unit --filter testConstructWithValidValue tests/Unit/Article/Domain/ValueObject/TitleTest.php
 
 # Run Symfony console with debugging
 make cli-console app:some-command

@@ -9,6 +9,7 @@ use Micro\Component\Common\Domain\Outbox\OutboxEntryInterface;
 use Micro\Component\Common\Domain\Outbox\OutboxMessageType;
 use Micro\Component\Common\Domain\Outbox\OutboxRepositoryInterface;
 use Micro\Component\Common\Infrastructure\Console\PublishOutboxCommand;
+use Micro\Component\Common\Infrastructure\Outbox\Metrics\OutboxMetricsInterface;
 use Micro\Component\Common\Infrastructure\Outbox\Publisher\OutboxPublisherInterface;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -32,6 +33,7 @@ final class PublishOutboxCommandTest extends TestCase
 
     private OutboxRepositoryInterface&MockInterface $outboxRepository;
     private OutboxPublisherInterface&MockInterface $publisher;
+    private OutboxMetricsInterface&MockInterface $metrics;
     private LoggerInterface&MockInterface $logger;
     private PublishOutboxCommand $command;
     private CommandTester $commandTester;
@@ -42,15 +44,46 @@ final class PublishOutboxCommandTest extends TestCase
 
         $this->outboxRepository = Mockery::mock(OutboxRepositoryInterface::class);
         $this->publisher = Mockery::mock(OutboxPublisherInterface::class);
+
+        // Metrics mock with lenient expectations for all tests
+        $this->metrics = Mockery::mock(OutboxMetricsInterface::class);
+        $this->metrics->shouldReceive('setPendingCount')->andReturnSelf()->byDefault();
+        $this->metrics->shouldReceive('incrementProcessed')->andReturnSelf()->byDefault();
+        $this->metrics->shouldReceive('incrementFailed')->andReturnSelf()->byDefault();
+        $this->metrics->shouldReceive('recordMessagePublished')->andReturnNull()->byDefault();
+        $this->metrics->shouldReceive('recordPublishFailure')->andReturnNull()->byDefault();
+        $this->metrics->shouldReceive('recordRetryAttempt')->andReturnNull()->byDefault();
+
+        // Logger mock with lenient expectations for all tests
         $this->logger = Mockery::mock(LoggerInterface::class);
+        $this->logger->shouldReceive('info')->andReturnNull()->byDefault();
+        $this->logger->shouldReceive('warning')->andReturnNull()->byDefault();
+        $this->logger->shouldReceive('error')->andReturnNull()->byDefault();
+        $this->logger->shouldReceive('critical')->andReturnNull()->byDefault();
 
         $this->command = new PublishOutboxCommand(
             $this->outboxRepository,
             $this->publisher,
+            $this->metrics,
             $this->logger,
         );
 
         $this->commandTester = new CommandTester($this->command);
+
+        // Setup default metrics expectations for all tests
+        $this->setupDefaultMetrics();
+    }
+
+    private function setupDefaultMetrics(): void
+    {
+        $this->outboxRepository
+            ->shouldReceive('getMetrics')
+            ->andReturn([
+                'total_events' => 0,
+                'total_tasks' => 0,
+                'total_failures' => 0,
+            ])
+            ->byDefault();
     }
 
     // =========================================================================

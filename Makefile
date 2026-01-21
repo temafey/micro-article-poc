@@ -179,8 +179,8 @@ cli-php: ## Run PHP script with debugging (use: make cli-php script="scripts/tes
 cli-console: ## Run Symfony console in CLI container with debugging
 	$(DCC_CLI) exec test-micro-article-system-cli sh -lc "./bin/console $(RUN_ARGS)"
 
-.PHONY: cli-test
-cli-test: ## Run PHPUnit tests with debugging in CLI container
+.PHONY: test-unit
+test-unit: ## Run PHPUnit tests with debugging in CLI container
 	$(DCC_CLI) exec test-micro-article-system-cli ./vendor/bin/phpunit $(RUN_ARGS)
 
 .PHONY: cli-logs
@@ -226,7 +226,7 @@ cli-help: ## Show CLI container help
 	@echo "  make cli-exec cmd=\"...\"     # Run arbitrary command"
 	@echo "  make cli-php script=\"...\"   # Run PHP script with debugging"
 	@echo "  make cli-console <args>     # Run Symfony console"
-	@echo "  make cli-test <args>        # Run PHPUnit with debugging"
+	@echo "  make test-unit <args>        # Run PHPUnit with debugging"
 	@echo "  make cli-logs               # View container logs"
 	@echo "  make cli-status             # Show container & Xdebug status"
 	@echo ""
