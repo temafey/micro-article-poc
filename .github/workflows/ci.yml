@@ -79,6 +79,7 @@ jobs:
           APP_REDIS_HOST: localhost
           APP_REDIS_PORT: 6379
           APP_CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
+          CSRF_PROTECTION_ENABLED: false
           OTEL_CIRCUIT_BREAKER_ENABLED: false
           OTEL_CB_TIME_WINDOW: 30
           OTEL_CB_FAILURE_RATE: 50
@@ -104,6 +105,7 @@ jobs:
           APP_REDIS_HOST: localhost
           APP_REDIS_PORT: 6379
           APP_CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
+          CSRF_PROTECTION_ENABLED: false
           OTEL_CIRCUIT_BREAKER_ENABLED: false
           OTEL_CB_TIME_WINDOW: 30
           OTEL_CB_FAILURE_RATE: 50
