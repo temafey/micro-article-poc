@@ -72,11 +72,15 @@ jobs:
         run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
         env:
           APP_DATABASE_HOST: localhost
+          APP_DATABASE_ROOT_LOGIN: postgres
+          APP_DATABASE_ROOT_PASSWORD: postgres
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
         env:
           APP_DATABASE_HOST: localhost
+          APP_DATABASE_ROOT_LOGIN: postgres
+          APP_DATABASE_ROOT_PASSWORD: postgres
           APP_DATABASE_SERVICE_LOGIN: postgres
           APP_DATABASE_SERVICE_PASSWORD: postgres
 
