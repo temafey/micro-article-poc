@@ -74,6 +74,8 @@ jobs:
           APP_DATABASE_HOST: localhost
           APP_DATABASE_ROOT_LOGIN: postgres
           APP_DATABASE_ROOT_PASSWORD: postgres
+          APP_REDIS_HOST: localhost
+          APP_REDIS_PORT: 6379
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
@@ -83,6 +85,8 @@ jobs:
           APP_DATABASE_ROOT_PASSWORD: postgres
           APP_DATABASE_SERVICE_LOGIN: postgres
           APP_DATABASE_SERVICE_PASSWORD: postgres
+          APP_REDIS_HOST: localhost
+          APP_REDIS_PORT: 6379
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
