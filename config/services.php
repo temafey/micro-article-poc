@@ -78,8 +78,4 @@ return static function (ContainerConfigurator $container): void {
     // Makes classes in src/Article available to be used as services
     // Creates a service per class whose id is the fully-qualified class name
     $services->load('Micro\\Article\\', '../src/Article');
-
-    // Register Identity module services (JWT + User subdomains)
-    // Makes classes in src/Identity available to be used as services
-    $services->load('Micro\\Identity\\', '../src/Identity');
 };

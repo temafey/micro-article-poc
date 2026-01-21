@@ -22,7 +22,7 @@
         "guzzlehttp/psr7": "^2.8",
         "http-interop/http-factory-discovery": "^1.6",
         "league/csv": "^9.27",
-        "micro-module/base": "^0.10 || ^0.11",
+        "micro-module/base": "^0.12.0",
         "micro-module/broadway": "^2.6",
         "micro-module/broadway-bundle": "^0.6",
         "micro-module/broadway-saga": "^0.6",

@@ -20,6 +20,7 @@ use Micro\Article\Domain\ValueObject\Article;
 use MicroModule\Base\Application\Command\CommandInterface as BaseCommandInterface;
 use MicroModule\Base\Application\Dto\DtoInterface;
 use MicroModule\Base\Domain\Exception\FactoryException;
+use MicroModule\Base\Domain\ValueObject\CommandName;
 use MicroModule\Base\Domain\ValueObject\Payload;
 use MicroModule\Base\Domain\ValueObject\ProcessUuid;
 use MicroModule\Base\Domain\ValueObject\Uuid;
@@ -357,5 +358,29 @@ class CommandFactory implements CommandFactoryInterface
             Uuid::fromNative($uuid),
             $payload ? Payload::fromNative($payload) : null
         );
+    }
+
+    /**
+     * Create CommandName value object (Domain layer requirement).
+     */
+    public function makeCommandName(string $commandName): CommandName
+    {
+        return CommandName::fromNative($commandName);
+    }
+
+    /**
+     * Create ProcessUuid for command execution (Domain layer requirement).
+     */
+    public function makeCommandProcessUuid(?string $processUuid = null): ProcessUuid
+    {
+        return ProcessUuid::fromNative($processUuid ?? \Ramsey\Uuid\Uuid::uuid6()->toString());
+    }
+
+    /**
+     * Create Payload for command data (Domain layer requirement).
+     */
+    public function makeCommandPayload(array $payload): Payload
+    {
+        return Payload::fromNative($payload);
     }
 }
