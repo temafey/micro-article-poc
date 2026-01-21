@@ -81,6 +81,8 @@ jobs:
           OTEL_CB_FAILURE_RATE: 50
           OTEL_CB_MIN_REQUESTS: 3
           OTEL_CB_HALF_OPEN_INTERVAL: 10
+          OTEL_SERVICE_NAME: micro-article-service
+          OTEL_SERVICE_VERSION: 1.0.0
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
@@ -97,6 +99,8 @@ jobs:
           OTEL_CB_FAILURE_RATE: 50
           OTEL_CB_MIN_REQUESTS: 3
           OTEL_CB_HALF_OPEN_INTERVAL: 10
+          OTEL_SERVICE_NAME: micro-article-service
+          OTEL_SERVICE_VERSION: 1.0.0
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
