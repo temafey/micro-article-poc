@@ -1,0 +1,123 @@
+# FrankenPHP Caddyfile for News Microservice
+# Replaces nginx configuration with Caddy
+
+{
+    # Global options
+    frankenphp
+
+    # Order PHP server before file server
+    order php_server before file_server
+
+    # Logging to stdout for container environments
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+
+    # Disable admin API in production
+    admin off
+
+    # Auto HTTPS (disabled for local dev, enable in production)
+    # auto_https off
+}
+
+:80, :443 {
+    # Document root
+    root * /app/public
+
+    # Enable compression (only for responses > 512 bytes to avoid overhead on small API responses)
+    encode {
+        zstd
+        gzip 5
+        minimum_length 512
+    }
+
+    # Security headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        # Remove server identification
+        -Server
+        -X-Powered-By
+    }
+
+    # Health check endpoint (fast, no PHP processing)
+    handle /health {
+        respond "OK" 200
+    }
+
+    # PHP-FPM status equivalent (for monitoring)
+    handle /php-status {
+        respond `{"status": "running", "mode": "worker"}` 200
+        header Content-Type "application/json"
+    }
+
+    # API routes - Worker mode for maximum performance
+    @api {
+        path /api/*
+    }
+    handle @api {
+        php_server {
+            # Worker mode configuration
+            worker {
+                # Entry point
+                file ./public/index.php
+                # Number of worker processes (adjust based on CPU)
+                num {$FRANKENPHP_NUM_WORKERS:4}
+                # Watch for file changes (dev only, disable in prod)
+                # watch
+            }
+        }
+    }
+
+    # OpenAPI documentation endpoint
+    @docs {
+        path /api/doc /api/doc.json /api/doc.yaml
+    }
+    handle @docs {
+        php_server
+    }
+
+    # Static files with caching
+    @static {
+        file
+        path *.css *.js *.ico *.gif *.jpg *.jpeg *.png *.svg *.woff *.woff2 *.ttf *.eot
+    }
+    handle @static {
+        file_server
+        header Cache-Control "public, max-age=31536000, immutable"
+    }
+
+    # Bundles directory (Symfony assets)
+    @bundles {
+        path /bundles/*
+    }
+    handle @bundles {
+        file_server
+        header Cache-Control "public, max-age=86400"
+    }
+
+    # robots.txt
+    handle /robots.txt {
+        file_server
+        header Cache-Control "public, max-age=86400"
+    }
+
+    # favicon.ico
+    handle /favicon.ico {
+        file_server
+        header Cache-Control "public, max-age=604800"
+    }
+
+    # All other requests go to PHP (standard mode, not worker for non-API)
+    handle {
+        php_server
+    }
+
+    # Note: Logging is configured globally at top level - no duplicate needed here
+}

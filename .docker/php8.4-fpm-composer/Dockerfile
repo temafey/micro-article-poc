@@ -1,0 +1,19 @@
+ARG DOCKER_SERVER_HOST=docker.local
+ARG DOCKER_PROJECT_PATH=expo-micro-news
+ARG DOCKER_PHP_VERSION=8.4
+ARG DOCKER_IMAGE_VERSION=master
+
+FROM ${DOCKER_SERVER_HOST}/${DOCKER_PROJECT_PATH}/php${DOCKER_PHP_VERSION}-fpm:${DOCKER_IMAGE_VERSION}
+# These ARGs should be after FROM or they will be empty
+
+ARG DOCKER_UID=1000
+ARG DOCKER_GID=1000
+
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_MEMORY_LIMIT=-1
+ENV COMPOSER_CACHE_DIR=/.composer_cache
+ENV COMPOSER_HOME=/.composer
+
+RUN set -eux \
+    && apk add --no-cache git \
+    && install-php-extensions @composer
