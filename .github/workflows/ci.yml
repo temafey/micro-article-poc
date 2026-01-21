@@ -83,6 +83,10 @@ jobs:
           OTEL_CB_HALF_OPEN_INTERVAL: 10
           OTEL_SERVICE_NAME: micro-article-service
           OTEL_SERVICE_VERSION: 1.0.0
+          PYROSCOPE_ENABLED: false
+          PYROSCOPE_SERVER_ADDRESS: http://localhost:4040
+          PYROSCOPE_SAMPLE_RATE: 100
+          PYROSCOPE_UPLOAD_INTERVAL: 10
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
@@ -101,6 +105,10 @@ jobs:
           OTEL_CB_HALF_OPEN_INTERVAL: 10
           OTEL_SERVICE_NAME: micro-article-service
           OTEL_SERVICE_VERSION: 1.0.0
+          PYROSCOPE_ENABLED: false
+          PYROSCOPE_SERVER_ADDRESS: http://localhost:4040
+          PYROSCOPE_SAMPLE_RATE: 100
+          PYROSCOPE_UPLOAD_INTERVAL: 10
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
