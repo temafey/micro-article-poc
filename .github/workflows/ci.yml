@@ -72,6 +72,8 @@ jobs:
         run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
         env:
           APP_DATABASE_HOST: localhost
+          APP_DATABASE_PORT: 5432
+          APP_DATABASE_NAME: micro-article-system
           APP_DATABASE_ROOT_LOGIN: postgres
           APP_DATABASE_ROOT_PASSWORD: postgres
           APP_REDIS_HOST: localhost
@@ -92,6 +94,8 @@ jobs:
         run: vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text
         env:
           APP_DATABASE_HOST: localhost
+          APP_DATABASE_PORT: 5432
+          APP_DATABASE_NAME: micro-article-system
           APP_DATABASE_ROOT_LOGIN: postgres
           APP_DATABASE_ROOT_PASSWORD: postgres
           APP_DATABASE_SERVICE_LOGIN: postgres
